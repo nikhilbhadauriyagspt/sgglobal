@@ -1,0 +1,2267 @@
+:root {
+  --primary-color: #e6a910; 
+  --secondary-color: #002365; 
+}
+
+body {
+  font-family: "Roboto Slab", serif;
+}
+
+.navbar {
+    background: rgb(255 255 255 / 45%);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px) !important;
+    position: fixed !important;
+    width: 100% !important;
+    z-index: 1000 !important;
+    padding: 2px 0;
+    transition: background 0.3s ease;
+    top: 44px;
+}
+
+.navbar.scrolled {
+  background: #fff;
+}
+.navbar.scrolled .nav-link {
+  color: var(--secondary-color);
+}
+.navbar .navbar-brand img {
+  height: 80px;
+}
+
+.navbar-nav .nav-link {
+  color: #fff;
+  font-weight: 600;
+  line-height: 16px;
+  padding: 32px 35px 32px !important;
+  font-size: 16px;
+  transition: color 0.3s ease;
+  font-family: "Roboto Slab", serif;
+}
+
+.navbar-nav .nav-link:hover {
+  color: var(--primary-color);
+}
+.navbar-nav .dropdown-menu {
+    background-color: #0f1537;
+    border: none;
+    left: -246px;
+    border-radius: 5px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    padding: 10px 0;
+    min-width: 850px;
+}
+
+.navbar-nav .nav-link.active {
+  color: var(--primary-color) !important;
+}
+
+.navbar-nav .dropdown:hover .dropdown-menu {
+  display: block; 
+  margin-top: 0; 
+}
+
+.navbar-nav .dropdown-menu {
+  background-color: #0f1537;
+  border: none;
+  border-radius: 5px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  padding: 10px 0;
+  min-width: 850px; 
+}
+
+.navbar-nav .dropdown-item {
+  color: #fff;
+  font-size: 0.9rem;
+  padding: 8px 20px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.navbar-nav .dropdown-item:hover {
+  background-color: #1a234a;
+  color: #ffb606;
+}
+
+.dropdown-header {
+  color: #ffb606 !important;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 8px 20px;
+}
+
+.dropdown-divider {
+  background-color: #3a4670; 
+}
+.course-overview h2{
+  font-size: 40px;
+  font-weight:700;
+    color: var(--secondary-color);
+    line-height: 50px;
+}
+.course-overview ul li i{
+  color: var(--primary-color);
+}
+.course-overview ul{
+  margin-bottom: 30px;
+}
+.enroll-btn {
+  background-color: var(--primary-color);
+  padding: 10px 20px 10px 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  text-decoration: none;
+  z-index: 99;
+  line-height: 1.5em;
+  color: #ffffff;
+  font-family: "Roboto Slab", serif;
+  border-style: none;
+  border-radius: 8px 8px 8px 8px;
+  transition: background-color 0.3s ease;
+}
+
+.enroll-btn:hover {
+  background-color: #b38f24; 
+}
+
+/* Banner Styles */
+.banner {
+  height: 100vh;
+  background: url("../images/banner/banner-2.jpg") no-repeat center center/cover;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #fff;
+  position: relative;
+}
+
+.banner::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgb(0 0 0 / 76%);
+}
+.banner-content {
+  position: relative;
+  z-index: 2;
+}
+
+.banner-content .small-heading {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--primary-color);
+}
+
+.banner-content .large-heading {
+  margin: 12px 0px 30px 0px;
+  font-size: 3.75rem;
+  font-family: "Roboto Slab", serif;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  color: #fff;
+}
+
+.banner-content .banner-btn {
+  color: #fff;
+  border: none;
+  background-color: #000c2784;
+  padding: 16px 40px 16px;
+  border-radius: 8px 8px 8px 8px;
+  font-size: 1.2rem;
+  transition: background-color 0.3s ease;
+}
+
+.banner-content .banner-btn:hover {
+  background-color: #b38f24; 
+}
+
+.ai-course-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 140px 0;
+  background-image: url("../images/banner/about-bg.jpg");
+  background-size: cover;
+  background-position: center;
+  color: #fff;
+}
+
+.content-left {
+  max-width: 50% !important;
+}
+
+.content-left h1 {
+  font-size: 47px;
+  width: 80%;
+  font-weight: 500;
+  line-height: 60px;
+  color: #fff;
+  font-family: "Roboto Slab", serif;
+  margin-bottom: 30px;
+}
+
+.content-left p {
+  font-size: 16px;
+  font-family: "Roboto", sans-serif;
+  width: 80%;
+  line-height: 25px;
+  margin-bottom: 10px;
+}
+
+.enroll-btn {
+    color: #fff;
+    padding: 11px 25px;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.enroll-btn:hover {
+  background-color: var(--primary-color);
+}
+.expect-section {
+  padding: 60px 0;
+  background-color: #000c27;
+}
+.expert-box {
+  background: #0f1537;
+  padding: 43px 30px 20px;
+  min-height: 500px;
+  border-radius: 10px;
+  color: #fff;
+}
+.expect-section h2 {
+  font-size: 45px;
+  color: #fff;
+  font-family: "Roboto Slab", serif;
+  font-weight: 700;
+  margin-bottom: 75px;
+}
+
+.expect-section h4 {
+  font-size: 1.5rem;
+
+  font-family: "Roboto Slab", serif;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.expect-section ul {
+  list-style: none;
+  padding: 0;
+}
+
+.expect-section ul li {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 15px;
+  font-size: 16px;
+  font-family: "Roboto", sans-serif;
+}
+
+.expect-section ul li i {
+  color: var(--primary-color);
+  margin-right: 15px;
+  font-size: 1.2rem;
+  margin-top: 4px;
+}
+
+.curriculum-section {
+  padding: 60px 0;
+  background-color: #0f1537;
+}
+
+.curriculum-section h2 {
+  font-size: 45px;
+  color: #fff;
+  font-family: "Roboto Slab", serif;
+  font-weight: 700;
+  margin-bottom: 60px;
+  text-transform: capitalize;
+}
+
+.course-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 40px;
+  background: #ffffff1a;
+  padding: 25px;
+
+  border-radius: 10px;
+}
+
+.course-details .detail-card {
+  flex: 1;
+  min-width: 150px;
+  text-align: start;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.course-details .detail-card p {
+  margin: 0;
+
+  font-size: 14px;
+  font-family: "Roboto", sans-serif;
+  color: #ddd;
+}
+
+.course-details .detail-card h5 {
+  margin: 10px 0 0;
+  font-size: 1.2rem;
+  font-family: "Roboto Slab", serif;
+  color: #fff;
+}
+
+.week-item {
+  margin-bottom: 23px;
+  padding: 19px 20px 23px 20px;
+  border-bottom: 1px solid #a8a8a881;
+}
+
+.week-item .week-number {
+  color: var(--primary-color);
+  width: 15%;
+  font-weight: bold;
+  font-size: 40px;
+  margin-right: 15px;
+}
+.week-box {
+  width: 80%;
+  margin-right: 100px;
+}
+.week-item h3 {
+  line-height: 39px;
+  font-size: 28px;
+  color: #fff;
+  font-weight: 700;
+  font-family: "Roboto Slab", serif;
+  margin-bottom: 10px;
+}
+
+.week-item .sub-heading {
+  color: #fff;
+  font-size: 0.9rem;
+  margin-bottom: 15px;
+}
+
+.week-item p {
+  font-family: "Roboto", sans-serif;
+  font-size: 1rem;
+  color: #ffff;
+}
+.quote-section {
+  min-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 70px 20px;
+  background-image: url("../images/banner/middale-banner.jpg");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  position: relative;
+  color: #fff;
+}
+.quote-section::before {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 0;
+  background: #0f1537d2;
+}
+
+.quote-section blockquote {
+  z-index: 99;
+  font-size: 35px;
+  font-style: italic;
+  font-family: "Roboto Slab", serif;
+  font-weight: 700;
+  max-width: 800px;
+  margin-bottom: 30px;
+}
+
+.quote-section cite {
+  font-size: 1.2rem;
+  font-weight: bold;
+  display: block;
+  margin-top: 10px;
+}
+
+.audience-item {
+  padding: 40px 35px;
+  background-color: #0f1537;
+  border-radius: 10px;
+  height: 100%;
+}
+
+.audience-heading {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.audience-icon {
+  font-size: 1.5rem;
+  color: #ffb606;
+  margin-right: 18px;
+}
+
+.audience-heading h3 {
+  font-family: "Roboto Slab", serif;
+
+  font-size: 1.5rem;
+  color: #fff;
+  margin: 0;
+}
+
+.audience-item p {
+  font-size: 15px;
+  line-height: 26px;
+  color: #dddddd;
+
+  font-family: "Roboto", sans-serif;
+  margin: 0;
+}
+
+.testimonial-section {
+  padding: 60px 0;
+  background-color: #0f1537;
+}
+
+.testimonial-section h2 {
+  line-height: 45px;
+  font-size: 45px;
+  text-transform: capitalize;
+  text-align: center;
+  color: #fff;
+  font-weight: 700;
+  font-family: "Roboto Slab", serif;
+  margin-bottom: 70px;
+}
+
+.testimonial-item {
+  display: flex;
+  align-items: center;
+  border-radius: 8px;
+  border: 1px solid #dddddd4d;
+  padding: 20px;
+  margin-bottom: 40px;
+  min-height: 300px;
+}
+
+.testimonial-img {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 20px;
+}
+
+.testimonial-content {
+  flex: 1;
+}
+
+.testimonial-name {
+  font-size: 15px;
+
+  font-family: "Roboto Slab", serif;
+  color: #e6e6e6;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.testimonial-rating {
+  color: #ffb606;
+  margin-bottom: 15px;
+  font-size: 10px;
+}
+
+.testimonial-rating i {
+  font-size: 1rem;
+}
+
+.testimonial-description {
+  font-size: 1rem;
+
+  font-family: "Roboto", sans-serif;
+  width: 80%;
+  color: #6c757d;
+  line-height: 1.6;
+}
+.instructor-section {
+  padding: 60px 0;
+  background-color: #000c27;
+}
+
+.instructor-section h2 {
+  font-size: 2.5rem;
+
+  font-family: "Roboto Slab", serif;
+  color: #ffffff;
+  margin-bottom: 40px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.instructor-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 30px;
+}
+
+.instructor-img-container {
+  flex: 0 0 auto;
+  position: sticky;
+  border-radius: 10px;
+  overflow: hidden;
+  top: 20px;
+  z-index: 10;
+}
+
+.instructor-img {
+  max-width: 100%;
+  width: 90%;
+  height: auto;
+}
+
+.instructor-details {
+  flex: 1;
+}
+
+.instructor-details h3 {
+  font-size: 1.75rem;
+  color: #bdbdbd;
+
+  font-family: "Roboto Slab", serif;
+  margin-bottom: 15px;
+  font-weight: bold;
+}
+
+.instructor-details p {
+  font-size: 15px;
+  color: #939393;
+  line-height: 1.6;
+  margin-bottom: 10px;
+  font-family: "Roboto", sans-serif;
+}
+
+.experience-list {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 30px;
+}
+
+.experience-list li {
+  display: flex;
+  align-items: center;
+  font-size: 1rem;
+  color: #343a40;
+  margin-bottom: 15px;
+}
+
+.experience-list li i {
+  color: #ffb606;
+  margin-right: 10px;
+  font-size: 0.8rem;
+}
+.experience-list li .focused-text {
+    font-weight: bold;
+    width: 30%;
+    color: #ffff;
+    margin-right: 10px;
+}
+
+.brands-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: flex-start;
+}
+
+.brand-img {
+  width: 60px;
+  height: auto;
+  object-fit: contain;
+  filter: grayscale(100%);
+  transition: filter 0.3s;
+}
+
+.brand-img:hover {
+  filter: grayscale(0%);
+}
+
+.enrollment-section {
+  padding: 60px 0;
+  background-color: #0f1537;
+}
+
+.enrollment-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.header-item {
+  padding: 15px 20px;
+  border-radius: 8px;
+  text-align: start;
+}
+
+.header-item h2 {
+  font-size: 50px;
+  color: #fff;
+  font-weight: 600;
+  font-family: "Roboto Slab", serif;
+  margin-bottom: 5px;
+}
+
+.header-item h5 {
+  font-size: 1.25rem;
+  color: #fff;
+
+  font-family: "Roboto Slab", serif;
+  margin-bottom: 5px;
+}
+
+.header-item p {
+  font-size: 0.9rem;
+  color: #ddd;
+
+  font-family: "Roboto", sans-serif;
+  margin: 0 0 10px;
+}
+
+.enrollment-step {
+    background-color: #000c27;
+    border-radius: 8px;
+    min-height: 541px;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.enrollment-step h4 {
+  font-size: 1.5rem;
+  font-family: "Roboto Slab", serif;
+  color: #fff;
+  line-height: 30px;
+  margin-bottom: 40px;
+}
+
+.enrollment-step p.sub-heading {
+  font-size: 0.9rem;
+  color: #ffb606;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.enrollment-form .form-control {
+  padding: 13px 17px;
+  border-radius: 5px;
+  font-family: "Roboto Slab", serif;
+  font-weight: 400;
+  margin-bottom: 15px;
+  border: 1px solid #dddddd42;
+  color: #ddd;
+  background: transparent;
+  font-size: 0.9rem;
+}
+
+.enrollment-step .form-control::placeholder {
+  color: #ddd;
+}
+.enrollment-form .btn {
+  background-color: #ff6200;
+  border: none;
+  padding: 10px 20px;
+  font-size: 1rem;
+  border-radius: 5px;
+  transition: background-color 0.3s;
+}
+
+.enrollment-form .btn:hover {
+  background-color: #e55a00;
+}
+
+.payment-methods {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 30px;
+}
+
+.payment-method {
+  flex: 1;
+  min-width: 250px;
+}
+
+.payment-method h6 {
+  font-size: 1.1rem;
+
+  font-family: "Roboto Slab", serif;
+  color: #fff;
+  margin-bottom: 10px;
+}
+
+.payment-method ul {
+  list-style: none;
+  padding: 0 0 10px 20px;
+  font-size: 0.9rem;
+  color: #6c757d;
+  margin-bottom: 15px;
+  list-style: circle;
+}
+.confirmation-text ul li{
+  color: #868686;
+}
+
+.payment-method ul li strong {
+  color: #fff;
+}
+
+.payment-method img {
+  width: 100px;
+  height: auto;
+  border-radius: 5px;
+}
+
+.confirmation-text p {
+  font-size: 0.9rem;
+  color: #6c757d;
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+
+.waitlist-section {
+  text-align: center;
+  padding: 60px 0;
+  background-image: url(../images/banner/last-banner.jpg);
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+
+.waitlist-section::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgb(0 0 0 / 80%);
+}
+
+.waitlist-section .container {
+  position: relative;
+  z-index: 1;
+}
+
+.waitlist-section h2 {
+  font-size: 40px;
+  line-height: 50px;
+  width: 900px;
+  display: inline-block;
+  color: #fff;
+  margin-bottom: 10px;
+
+  font-family: "Roboto Slab", serif;
+  text-align: center;
+  font-weight: bold;
+}
+
+.waitlist-form-container {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.waitlist-form {
+  display: flex;
+  gap: 0px;
+  align-items: center;
+  justify-content: center;
+}
+
+.waitlist-form .form-control {
+  border-radius: 5px 0 0 5px;
+  font-size: 0.9rem;
+  padding: 10px;
+}
+
+.waitlist-form .btn {
+  background-color: var(--primary-color);
+  border: none;
+  padding: 10px 20px;
+  font-weight: 600;
+  color: #fff;
+  font-size: 0.9rem;
+  border-radius: 0 5px 5px 0;
+  transition: background-color 0.3s;
+}
+
+.waitlist-form .btn:hover {
+  background-color: #e55a00;
+}
+
+.form-response {
+  margin-top: 15px;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #343a40;
+  display: none;
+}
+
+.faq-section {
+  padding: 60px 0;
+  background-color: #0f1537; /* Updated section background color */
+}
+
+.faq-section h2 {
+  font-size: 2.5rem;
+  color: #fff; /* Changed to white for readability on dark background */
+  margin-bottom: 40px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.faq-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.faq-column {
+  padding: 0 15px;
+}
+
+.accordion-item {
+  border: none !important;
+  margin-bottom: 15px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3); /* Adjusted shadow for darker background */
+  background-color: #000c27 !important; /* Updated accordion item background color */
+}
+
+.accordion-button {
+  font-size: 20px !important;
+  font-family: "Roboto Slab", serif;
+  color: #fff !important;
+  line-height: 29px;
+  padding: 15px 20px !important;
+  background-color: #000c27 !important;
+  font-weight: 500 !important;
+  border-radius: 8px !important;
+}
+
+.accordion-button:not(.collapsed) {
+  color: #fff; /* No color change on active */
+  background-color: #000c27 !important; /* No background change on active */
+  box-shadow: none;
+}
+
+.accordion-button:hover {
+  color: #fff; /* No color change on hover */
+  background-color: #000c27 !important; /* No background change on hover */
+}
+
+.accordion-button:focus {
+  box-shadow: none !important;
+  border-color: transparent;
+}
+
+.accordion-button::after {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23fff'%3E%3Cpath fill-rule='evenodd' d='M8 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 4z'/%3E%3Cpath fill-rule='evenodd' d='M4 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 4 8z'/%3E%3C/svg%3E") !important;
+}
+
+.accordion-button:not(.collapsed)::after {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23fff'%3E%3Cpath fill-rule='evenodd' d='M4 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 4 8z'/%3E%3C/svg%3E") !important;
+}
+
+.accordion-body {
+  padding: 20px;
+  font-size: 0.9rem;
+  color: #d1d4db; /* Light gray for readability on dark background */
+  line-height: 1.6;
+  background-color: #000c27; /* Match accordion item background */
+}
+
+.accordion-body p {
+  margin-bottom: 10px;
+}
+
+.accordion-body ul,
+.accordion-body ol {
+  padding-left: 20px;
+  margin-bottom: 10px;
+}
+
+.accordion-body ul li,
+.accordion-body ol li {
+  margin-bottom: 5px;
+}
+
+.accordion-body a {
+  color: #ffb606; /* Adjusted link color for visibility */
+  text-decoration: none;
+}
+
+.accordion-body a:hover {
+  color: #ffb606; /* No color change on hover */
+  text-decoration: underline;
+}
+
+.footer-section {
+  background-color: #000c27; /* Matches FAQ section background */
+  padding: 20px 0;
+  color: #fff;
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.footer-left {
+  font-size: 0.9rem;
+}
+
+.footer-right {
+  display: flex;
+  gap: 15px;
+}
+
+.social-icon {
+  color: #ffb606; /* Matches website accent color */
+  font-size: 1.2rem;
+  transition: color 0.3s ease;
+}
+
+.social-icon:hover {
+  color: #e5a505; /* Slightly darker shade for hover effect */
+}
+
+
+/* Footer Styles */
+.footer-section {
+  background-color: var(--secondary-color);
+  color: #ffffff;
+  padding: 60px 0 20px;
+  font-family: "Roboto", sans-serif;
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 30px;
+  margin-bottom: 40px;
+}
+
+.footer-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.footer-logo-img {
+  max-width: 150px;
+  height: auto;
+  background: #fff;
+  border-radius: 10px;
+}
+
+.footer-brand-text {
+  font-size: 1rem;
+  line-height: 1.6;
+  opacity: 0.9;
+}
+
+.footer-social {
+  display: flex;
+  gap: 15px;
+}
+
+.social-icon {
+  color: #ffffff;
+  font-size: 1.2rem;
+  transition: color 0.3s ease;
+}
+
+.social-icon:hover {
+  color: var(--primary-color);
+}
+
+.footer-heading {
+  font-family: "Roboto Slab", serif;
+  font-size: 1.25rem;
+  color: var(--primary-color);
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.footer-heading::after {
+  content: "";
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 50px;
+  height: 2px;
+  background-color: var(--primary-color);
+}
+.footer-courses .accordion {
+  background-color: transparent !important;
+}
+
+.footer-courses .accordion-item {
+  background-color: transparent !important;
+  border: none !important;
+  margin-bottom: 10px !important;
+}
+
+.footer-courses .accordion-button {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+  font-family: "Roboto", sans-serif !important;
+  font-size: 0.95rem !important;
+  padding: 10px !important;
+  border-radius: 5px !important;
+  box-shadow: none !important;
+  transition: background-color 0.3s ease !important;
+}
+
+.footer-courses .accordion-button:not(.collapsed) {
+  background-color: var(--primary-color) !important;
+  color: #ffffff !important;
+}
+
+.footer-courses .accordion-button:focus {
+  box-shadow: none !important;
+}
+
+.footer-courses .accordion-button::after {
+  filter: brightness(0) invert(1) !important;
+}
+
+.footer-courses .accordion-body {
+  background-color: transparent !important;
+  padding: 10px 0 !important;
+}
+
+.footer-courses .footer-nav {
+  margin: 0 !important;
+}
+
+.footer-courses .footer-nav li {
+  margin-bottom: 8px;
+}
+.footer-nav {
+  list-style: none;
+  padding: 0;
+}
+
+.footer-nav li {
+  margin-bottom: 10px;
+}
+
+.footer-nav a {
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 1rem;
+  transition: color 0.3s ease;
+}
+
+.footer-nav a:hover {
+  color: var(--primary-color);
+}
+
+.footer-contact-list {
+  list-style: none;
+  padding: 0;
+}
+
+.footer-contact-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+  font-size: 1rem;
+}
+
+.footer-contact-list i {
+  color: var(--primary-color);
+  font-size: 1.2rem;
+}
+
+.footer-contact-list a {
+  color: #ffffff;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.footer-contact-list a:hover {
+  color: var(--primary-color);
+}
+
+.footer-newsletter p {
+  font-size: 1rem;
+  margin-bottom: 20px;
+}
+
+.newsletter-form {
+  display: flex;
+  gap: 10px;
+}
+
+.newsletter-form .form-control {
+  background-color: #ffffff;
+  border: none;
+  padding: 10px;
+  font-size: 1rem;
+  border-radius: 5px;
+  font-family: "Roboto", sans-serif;
+}
+.newsletter-form .form-control::placeholder{
+  font-size: 13px;
+}
+.footer-btn {
+  background-color: var(--primary-color);
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  font-size: 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  font-family: "Roboto", sans-serif;
+}
+
+.footer-btn:hover {
+  background-color: #d89b00;
+}
+
+.form-response {
+  margin-top: 10px;
+  font-size: 0.9rem;
+  display: none;
+}
+
+.footer-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.9rem;
+}
+
+.footer-bottom-links {
+  display: flex;
+  gap: 20px;
+}
+
+.footer-bottom-links a {
+  color: #ffffff;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.footer-bottom-links a:hover {
+  color: var(--primary-color);
+}
+
+/* Courses Section */
+.courses-section {
+  background-color: #f8f9fa;
+  padding: 60px 0;
+  font-family: "Roboto", sans-serif;
+}
+
+.courses-section h2 {
+    font-size: 45px;
+    color: var(--secondary-color);
+    font-family: "Roboto Slab", serif;
+    font-weight: 700;
+    margin-bottom:15px !important;
+}
+
+.courses-section p {
+  font-size: 1.1rem;
+  color: #555;
+  max-width: 600px;
+  margin: 0 auto 40px;
+}
+
+ #courses .nav-tabs {
+  gap: 10px;
+  border-bottom: none;
+}
+
+ #courses .nav-tabs .nav-link {
+  font-family: "Roboto Slab", serif;
+  font-size: 1.1rem;
+  color: var(--secondary-color);
+  font-weight: 600;
+  padding: 10px 30px !important;
+  background: #ddd;
+  border: none;
+  border-radius: 50px;
+  transition: color 0.3s ease, background-color 0.3s ease;
+}
+
+.courses .nav-tabs .nav-link:hover {
+  color: var(--primary-color);
+}
+
+
+#courses .nav-tabs .nav-item.show .nav-link, #courses .nav-tabs .nav-link.active {
+   color: #fff;
+  background-color: var(--primary-color);
+  border: none;
+
+}
+.card-img img {
+    height: 159px;
+    object-fit: contain;
+}
+.card-img{
+  border-bottom: 1px solid #ddd;
+  border-radius: 0 !important;
+  margin-bottom: 20px;
+}
+
+.course-card {
+  background-color: #fff;
+  border: none !important;
+  border-radius: 10px;
+  box-shadow: none !important;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.course-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.course-card .card-title {
+  font-family: "Roboto Slab", serif;
+  font-size: 1.25rem;
+  color: var(--secondary-color);
+  margin-bottom: 15px;
+}
+
+.course-card .card-text {
+  font-size: 0.95rem;
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.course-btn {
+  background-color: var(--secondary-color) !important;
+  color: #fff !important;
+  border: none;
+  padding: 8px 20px !important;
+  font-size: 0.9rem !important;
+  font-weight: 600;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+#design .card-img img {
+    height: 159px;
+    object-fit: cover;
+}
+
+.course-btn:hover {
+  background-color: #d89b00 !important;
+}
+.banner-content {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.small-heading {
+  font-family: "Roboto", sans-serif;
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  color: var(--primary-color);
+}
+
+.large-heading {
+  font-family: "Roboto Slab", serif;
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 30px;
+  min-height: 60px; /* Prevent layout shift */
+  color: #fff;
+  transition: color 0.3s ease;
+}
+
+.banner-btn {
+  background-color: var(--primary-color);
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  font-size: 1rem;
+  border-radius: 5px;
+  margin: 5px;
+  transition: background-color 0.3s ease;
+  font-family: "Roboto", sans-serif;
+}
+
+.banner-btn:hover {
+  background-color: #d89b00;
+}
+.partner-logo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 120px;
+    padding: 10px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+  .nav-tabs .nav-item.show .nav-link, .nav-tabs .nav-link.active {
+    color: #fff !important;
+    background-color: var(--primary-color) !important;
+}
+.hero-section {
+    padding-top: 130px;
+}
+  .partner-logo img {
+    max-height: 100px;
+    max-width: 150px;
+    object-fit: contain;
+  }
+ /* CTA Section */
+    .cta-section {
+      padding: 60px 0;
+      background-color: #e6a910; /* --primary-color */
+      text-align: center;
+    }
+    .cta-section h2 {
+      font-family: 'Roboto Slab', serif;
+      font-size: 2.5rem;
+      color: #fff;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+    .cta-section p {
+      font-family: 'Roboto', sans-serif;
+      font-size: 1.2rem;
+      color: #fff;
+      margin-bottom: 30px;
+    }
+.cta-section .enroll-btn{
+    background: #002365;
+}
+
+    .course-banner {
+      background: url('../images/banner/management.avif') no-repeat center center/cover;
+      position: relative;
+      padding: 200px 0 150px;
+      text-align: center;
+      color: #fff;
+    }
+    .course-banner::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 35, 101, 0.7); /* --secondary-color #002365 */
+    }
+    .course-banner .container {
+      position: relative;
+    }
+    .course-banner h1 {
+      font-family: 'Roboto Slab', serif;
+      font-size: 3rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    .course-banner .breadcrumb {
+      justify-content: center;
+      background: transparent;
+      padding: 0;
+    }
+    .course-banner .breadcrumb-item a {
+      color: #e6a910; /* --primary-color */
+      text-decoration: none;
+    }
+    .course-banner .breadcrumb-item a:hover {
+      text-decoration: underline;
+    }
+    .course-banner .breadcrumb-item {
+      color: #fff;
+      font-family: 'Roboto', sans-serif;
+      font-size: 1rem;
+    }
+    .course-banner .breadcrumb-item + .breadcrumb-item::before {
+      color: #fff;
+    }
+
+    /* Course Overview Section */
+    .course-overview-section {
+      padding: 80px 0;
+      background-color: #f8f9fa;
+    }
+    .course-overview-section h2 {
+      font-family: 'Roboto Slab', serif;
+      font-size: 2.5rem;
+      color: #002365;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+    .course-overview-section p {
+      font-family: 'Roboto', sans-serif;
+      font-size: 1.1rem;
+      color: #6c757d;
+      line-height: 1.8;
+    }
+    .course-overview-image {
+      width: 100%;
+      height: 400px;
+      object-fit: cover;
+      border-radius: 15px;
+      transition: transform 0.3s ease;
+    }
+    .course-overview-image:hover {
+      transform: scale(1.05);
+    }
+
+    /* Course Details Section */
+    .course-details-section {
+      padding: 80px 0;
+      background-color: #fff;
+      position: relative;
+    }
+    .course-details-section h2 {
+      font-family: 'Roboto Slab', serif;
+      font-size: 2.5rem;
+      color: #002365;
+      font-weight: 700;
+      margin-bottom: 40px;
+      text-align: center;
+    }
+    .course-details-card {
+      padding: 30px;
+      background: linear-gradient(135deg, #fff, #f8f9fa);
+      border-radius: 15px;
+      transition: transform 0.3s ease;
+      margin-bottom: 10px;
+    }
+    .course-details-card:hover {
+      transform: translateY(-10px);
+    }
+    .course-details-card h3 {
+      font-family: 'Roboto Slab', serif;
+      font-size: 1.8rem;
+      color: #002365;
+      margin-bottom: 20px;
+    }
+    .course-details-card ul {
+      list-style: none;
+      padding: 0;
+    }
+    .course-details-card li {
+      font-family: 'Roboto', sans-serif;
+      font-size: 1.1rem;
+      color: #6c757d;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+    }
+    .course-details-card i {
+      color: #e6a910;
+      font-size: 1.5rem;
+      margin-right: 15px;
+    }
+
+    /* Testimonials Section */
+    .testimonials-section {
+      padding: 80px 0;
+      background: linear-gradient(135deg, #002365, #1a3a8c);
+      color: #fff;
+    }
+    .testimonials-section h2 {
+      font-family: 'Roboto Slab', serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 40px;
+      text-align: center;
+    }
+    .testimonial-card {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      transition: transform 0.3s ease;
+    }
+    .testimonial-card:hover {
+      transform: translateY(-10px);
+    }
+    .testimonial-card p {
+      font-family: 'Roboto', sans-serif;
+      font-size: 1.1rem;
+      margin-bottom: 20px;
+    }
+    .testimonial-card h5 {
+      font-family: 'Roboto Slab', serif;
+      font-size: 1.2rem;
+      color: #e6a910;
+    }
+    .owl-carousel .owl-nav button {
+      font-size: 2rem;
+      color: #e6a910;
+      background: none;
+      border: none;
+      margin: 0 10px;
+    }
+    .owl-carousel .owl-nav button:hover {
+      color: #d89b00;
+    }
+
+    /* Enquiry Form Section */
+    .enquiry-form-section {
+      padding: 80px 0;
+      background-color: #f8f9fa;
+    }
+    .enquiry-form-card {
+      padding: 30px;
+      background: linear-gradient(135deg, #002365, #1a3a8c);
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      color: #fff;
+      position: sticky;
+      top: 100px;
+    }
+    .enquiry-form-card h3 {
+      font-family: 'Roboto Slab', serif;
+      font-size: 1.8rem;
+      margin-bottom: 20px;
+    }
+    .enquiry-form .form-control {
+      font-family: 'Roboto', sans-serif;
+      font-size: 1rem;
+      padding: 12px;
+      border-radius: 5px;
+      border: 1px solid #ced4da;
+      margin-bottom: 20px;
+    }
+    .enquiry-form .form-control:focus {
+      border-color: #e6a910;
+      box-shadow: 0 0 5px rgba(230, 169, 16, 0.5);
+    }
+    .enquiry-form textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+    .enquiry-form .enroll-btn {
+      width: 100%;
+      padding: 12px;
+      font-family: 'Roboto', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 500;
+      background: #e6a910;
+      border: none;
+      color: #fff;
+      transition: transform 0.3s ease, background 0.3s ease;
+    }
+    .enquiry-form .enroll-btn:hover {
+      transform: scale(1.05);
+      background: #d89b00;
+    }
+
+    /* Topbar */
+    .topbar {
+      background: var(--secondary-color);
+      color: #fff;
+      padding: 10px 0;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 1000;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+
+    .topbar-contact {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      font-size: 0.9rem;
+    }
+
+    .topbar-contact a {
+      color: #fff;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: color 0.3s ease;
+    }
+
+    .topbar-contact a:hover {
+      color: var(--primary-color);
+    }
+
+    .topbar-contact i {
+      color: var(--primary-color);
+      font-size: 1rem;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      justify-content: end;
+      gap: 25px;
+    }
+
+    .topbar-login a {
+      background: transparent;
+      color: #fff;
+      font-size: 0.9rem;
+      text-decoration: none;
+      transition: background 0.3s ease, transform 0.3s ease;
+    }
+    .topbar-login a i{
+      color: var(--primary-color);
+      padding-right: 6px;
+      font-size: 16px;
+    }
+
+    .topbar-login .btn-login:hover {
+      background: #d99b0d;
+      transform: scale(1.05);
+    }
+
+    /* Course Dropdown */
+    .topbar-courses .dropdown-toggle {
+      background: transparent;
+      border: 1px solid var(--primary-color);
+      color: var(--primary-color);
+      padding: 6px 15px;
+      font-size: 0.9rem;
+      border-radius: 5px;
+      transition: background 0.3s ease;
+    }
+
+    .topbar-courses .dropdown-toggle:hover {
+      background: var(--primary-color);
+      color: #fff;
+    }
+
+    .topbar-courses .dropdown-menu {
+      background: #fff;
+      border: 1px solid var(--primary-color);
+      border-radius: 5px;
+    }
+
+    .topbar-courses .dropdown-item {
+      color: var(--secondary-color);
+      font-size: 0.9rem;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    .topbar-courses .dropdown-item:hover {
+      background: var(--primary-color);
+      color: #fff;
+    }
+
+    /* Live Chat */
+    .topbar-chat a {
+      color: #fff;
+      font-size: 0.9rem;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: color 0.3s ease;
+    }
+
+    .topbar-chat a:hover {
+      color: var(--primary-color);
+    }
+
+    .topbar-chat i {
+      color: var(--primary-color);
+      font-size: 1rem;
+    }
+
+  
+
+  
+   /* ========== For max-width: 992px ========== */
+@media (max-width: 992px) {
+      .courses-banner {
+        padding: 160px 0 30px !important;
+    }
+   .topbar-contact,
+      .topbar-right {
+        gap: 15px;
+        font-size: 0.85rem;
+      }
+
+      .topbar-contact i,
+      .topbar-right i {
+        font-size: 0.95rem;
+      }
+
+      .topbar-contact a[aria-label] i {
+        font-size: 1.1rem;
+      }
+  .enquiry-form-card {
+    position: static;
+    margin-top: 30px;
+  }
+
+  .footer-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .faq-column {
+    margin-bottom: 30px;
+  }
+
+  .enrollment-header {
+    justify-content: center;
+  }
+
+  .header-item {
+    flex: 1 1 45%;
+    max-width: 45%;
+  }
+
+  .payment-methods {
+    flex-direction: column;
+  }
+
+  .instructor-content {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .instructor-img-container {
+    position: static;
+  }
+
+  .instructor-img {
+    width: 300px;
+    margin-bottom: 20px;
+  }
+
+  .instructor-details {
+    text-align: center;
+  }
+
+  .brands-list {
+    justify-content: center;
+  }
+
+  .testimonial-item {
+    margin-bottom: 30px;
+  }
+
+  .navbar-nav .nav-link,
+  .enroll-btn {
+    margin: 10px 0;
+  }
+
+  .banner-content .large-heading {
+    font-size: 2.5rem;
+  }
+
+  
+}
+
+/* ========== For max-width: 768px ========== */
+@media (max-width: 768px) {
+  .hero-section p {
+    font-size: 16px !important;
+    margin: 15px 0;
+}
+.hero-section h1 {
+    font-family: 'Roboto Slab', serif;
+    font-size: 29px !important;
+    line-height: 1.1 !important;
+    font-weight: 700;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+      .hero-section {
+        height: 80vh !important
+;
+    }
+    .navbar-nav{
+      margin-bottom: 10px;
+    }
+    .ms-3{
+      margin: 0 !important;
+    }
+.benefits-section h2 {
+    font-family: 'Roboto Slab', serif;
+    color: var(--secondary-color);
+    text-align: center;
+    margin-bottom: 21px !important;
+    font-weight: 800;
+    font-size: 35px !important;
+    z-index: 1;
+}
+  .course-overview h2 {
+    font-size: 33px;
+    font-weight: 700;
+    color: var(--secondary-color);
+    line-height: 39px;
+}
+.course-section h2 {
+    font-size: 29px !important;
+    line-height: 35px !important;
+    width: 100% !important;
+    text-align: center;
+}
+.testimonial-card {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px !important;
+    text-align: center;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease;
+}
+.course-overview .image-stack {
+    position: relative;
+    margin-top: 40px;
+    height: 400px;
+}
+      .course-banner{
+        padding: 160px 0 30px !important;
+    }
+
+    .topbar-contact .fa-linkedin-in{
+      display: none !important;
+    }
+    .topbar-contact .fa-twitter{
+      display: none !important;
+    }
+    .topbar-contact .fa-facebook-f{
+      display: none !important;
+    }
+
+     .topbar-contact {
+        flex-direction: row;
+        justify-content: center;
+        gap: 30px;
+        margin-bottom:0px;
+    }
+
+         .topbar-right {
+        justify-content: center;
+        flex-direction: row;
+        gap: 20px;
+    }
+
+      .topbar-contact a,
+      .topbar-right a {
+        margin: 5px 0;
+        font-size: 0.8rem;
+      }
+
+      .topbar-contact i,
+      .topbar-right i {
+        font-size: 0.9rem;
+      }
+
+      .topbar-contact a[aria-label] i {
+        font-size: 1rem;
+      }
+
+      .navbar {
+        margin-top: 27px;
+    }
+    .navbar .navbar-brand img {
+    height: 50px;
+}
+  
+
+      .topbar-contact a {
+        margin: 5px 0;
+      }
+
+      .topbar-login {
+        margin-top: 5px;
+      }
+ 
+
+  .course-banner h1 {
+    font-size: 2rem;
+  }
+
+  .course-banner .breadcrumb-item {
+    font-size: 0.9rem;
+  }
+
+  .course-overview-section,
+  .course-details-section,
+  .testimonials-section,
+  .enquiry-form-section {
+    padding: 60px 0;
+  }
+
+  .course-overview-section h2,
+  .course-details-section h2,
+  .testimonials-section h2,
+  .instructor-section h2,
+  .testimonial-section h2,
+  .courses-section h2 {
+    font-size: 2rem;
+  }
+
+  .course-details-card h3,
+  .instructor-details h3 {
+    font-size: 1.5rem;
+  }
+
+  .course-details-card li,
+  .testimonial-card p,
+  .instructor-details p,
+  .experience-list li {
+    font-size: 0.9rem;
+  }
+
+  .testimonial-item {
+    padding: 15px;
+  }
+
+  .testimonial-img {
+    width: 80px;
+    height: 80px;
+  }
+
+  .testimonial-name {
+    font-size: 1.1rem;
+  }
+
+  .testimonial-description {
+    font-size: 0.9rem;
+  }
+
+  .course-overview-image {
+    height: 300px;
+    margin-bottom: 30px;
+  }
+
+  .banner {
+    padding: 80px 0;
+    height: 70vh;
+  }
+
+  .large-heading {
+    font-size: 2rem;
+  }
+
+  .small-heading {
+    font-size: 1.2rem;
+  }
+
+  .banner-btn {
+    padding: 8px 15px;
+    font-size: 0.9rem;
+  }
+
+  .nav-tabs .nav-link {
+    font-size: 1rem;
+    padding: 8px 15px;
+  }
+
+  .course-card .card-title {
+    font-size: 1.1rem;
+  }
+
+  .course-card .card-text {
+    font-size: 0.9rem;
+  }
+
+  .faq-section {
+    padding: 40px 0;
+  }
+
+  .faq-section h2 {
+    font-size: 23px;
+  }
+
+  .expect-section h2,
+  .curriculum-section h2 {
+    font-size: 32px;
+    color: #fff;
+    font-family: "Roboto Slab", serif;
+    font-weight: 700;
+    margin-bottom: 37px;
+  }
+
+  .curriculum-section h2 {
+    margin-bottom: 60px;
+    text-transform: capitalize;
+    font-size: 30px;
+  }
+
+  .quote-section blockquote {
+    z-index: 99;
+    font-size: 22px;
+    font-style: italic;
+    font-family: "Roboto Slab", serif;
+    font-weight: 700;
+    max-width: 800px;
+    margin-bottom: 30px;
+  }
+
+    .content-left {
+        max-width: 71% !important;
+        text-align: left;
+        margin-bottom: 20px;
+    }
+    .navbar.scrolled {
+    top: -28px;
+    background: #fff;
+    overflow: scroll;
+}
+.navbar-collapse {
+    height: 100vh;
+    flex-basis: 100%;
+    flex-grow: 1;
+    align-items: center;
+}
+.navbar-nav .dropdown-menu {
+    background-color: #0f1537;
+    border: none;
+    border-radius: 5px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    padding: 10px 0;
+    min-width: 100%;
+}
+.navbar-nav .nav-link {
+    color: #fff;
+    font-weight: 600;
+    line-height: 16px;
+    padding: 0px 0px 0px !important;
+    font-size: 16px;
+    transition: color 0.3s ease;
+    font-family: "Roboto Slab", serif;
+}
+.navbar-nav .dropdown:hover .dropdown-menu {
+    display: none;
+    margin-top: 0;
+}
+.dropdown-menu.show {
+    display: block !important;
+}
+.navbar-nav .dropdown-menu {
+    background-color: #0f1537;
+    border: none;
+    border-radius: 5px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    padding: 10px 0;
+    min-width: 100%;
+}
+
+  .content-left h1 {
+    font-size: 18px;
+    width: 100%;
+    font-weight: 500;
+    line-height: 25px;
+    color: #fff;
+    font-family: "Roboto Slab", serif;
+    margin-bottom: 10px;
+  }
+
+  .content-left p {
+    font-size: 11px;
+    font-family: "Roboto", sans-serif;
+    width: 100%;
+    line-height: 19px;
+    margin-bottom: 20px;
+  }
+
+  .banner-content {
+    padding-top: 100px;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .waitlist-section {
+    padding: 40px 0;
+  }
+
+  .waitlist-section h2 {
+    width: 100%;
+    font-size: 20px;
+    line-height: 32px;
+    color: #fff;
+    font-family: "Roboto Slab", serif;
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+
+  .waitlist-form {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .waitlist-form .form-control,
+  .waitlist-form .btn {
+    width: 100%;
+    font-size: 0.85rem;
+  }
+
+  .waitlist-form-container {
+    padding: 15px;
+  }
+
+  .enrollment-section {
+    padding: 40px 0;
+  }
+
+  .enrollment-header {
+    gap: 15px;
+  }
+
+  .header-item {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+
+  .header-item h2,
+  .header-item h5,
+  .enrollment-step h4 {
+    font-size: 1.5rem;
+  }
+
+  .payment-method img {
+    width: 80px;
+  }
+
+     .ai-course-section {
+        flex-direction: column;
+        text-align: center;
+        padding: 22px 14px 12px;
+    }
+
+  .brand-img {
+    width: 50px;
+  }
+
+  .week-item .d-flex {
+    display: block !important;
+  }
+}
+
+/* ========== For max-width: 576px ========== */
+@media (max-width: 576px) {
+      .courses-banner {
+        padding: 160px 0 30px;
+    }
+   .topbar {
+        padding: 8px 0;
+      }
+
+      .topbar-contact a,
+      .topbar-right a {
+        font-size: 0.75rem;
+      }
+
+      .topbar-contact i,
+      .topbar-right i {
+        font-size: 0.85rem;
+      }
+
+      .topbar-contact a[aria-label] i {
+        font-size: 0.95rem;
+      }
+      .banner {
+        padding: 37px 0 0;
+        margin-top: 73px;
+    }
+
+  .banner-content .small-heading {
+    font-size: 1rem;
+  }
+
+  .banner-content .large-heading {
+    font-size: 1.8rem;
+    margin: 10px 0;
+    line-height: 32px;
+    min-height: 100%;
+  }
+
+.banner-content .banner-btn {
+        padding: 7px 6px !important;
+        font-size: 12px !important;
+        text-decoration: none;
+    }
+
+  .d-flex.gap-3 {
+    flex-direction:row;
+    align-items: center;
+  }
+
+  .banner-btn {
+    width: 100%;
+    max-width: 200px;
+  }
+
+  .nav-tabs {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .nav-tabs .nav-link {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 5px;
+  }
+
+  .footer-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .footer-bottom {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+
+  .footer-bottom-links {
+    justify-content: center;
+  }
+
+  .footer-content {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .footer-right {
+    margin-top: 10px;
+  }
+}
