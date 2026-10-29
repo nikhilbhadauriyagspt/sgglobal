@@ -1,4 +1,5 @@
-﻿<?php
+<?php
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
 // Dynamic Explore Courses Page for SG Skill (100% Admin & Database Driven)
 require_once __DIR__ . '/admin/config/db.php';
 
@@ -457,7 +458,8 @@ $allCourses = $stmtCourses->fetchAll();
 <body>
 
   <!-- Site Header -->
-  <?php include 'header.php'; ?>
+  <?php
+if (session_status() === PHP_SESSION_NONE) { session_start(); } include 'header.php'; ?>
 
   <!-- Full-Width Hero with Background Image (No Shadow) -->
   <section class="explore-hero">
@@ -515,7 +517,8 @@ $allCourses = $stmtCourses->fetchAll();
 
       <!-- 3-Column Modern Grid -->
       <div class="row g-4" id="coursesGrid">
-        <?php foreach ($allCourses as $course): ?>
+        <?php
+if (session_status() === PHP_SESSION_NONE) { session_start(); } foreach ($allCourses as $course): ?>
           <div class="col-lg-4 col-md-6 course-grid-item" data-category="<?= htmlspecialchars($course['cat_key']) ?>" data-title="<?= strtolower(htmlspecialchars($course['title'])) ?>">
             <div class="neo-course-card">
               
@@ -549,7 +552,8 @@ $allCourses = $stmtCourses->fetchAll();
 
             </div>
           </div>
-        <?php endforeach; ?>
+        <?php
+if (session_status() === PHP_SESSION_NONE) { session_start(); } endforeach; ?>
       </div>
 
       <!-- No Results Fallback -->
@@ -579,7 +583,8 @@ $allCourses = $stmtCourses->fetchAll();
   </section>
 
   <!-- Site Footer -->
-  <?php include 'footer.php'; ?>
+  <?php
+if (session_status() === PHP_SESSION_NONE) { session_start(); } include 'footer.php'; ?>
 
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

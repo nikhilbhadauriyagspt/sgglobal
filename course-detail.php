@@ -1,4 +1,5 @@
-﻿<?php
+<?php
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
 // Dynamic Standout Modern Course Experience for SG Skill (100% Admin & Database Driven)
 require_once __DIR__ . '/admin/config/db.php';
 
@@ -730,7 +731,8 @@ $c['category']   = $c['category_name'] ?: 'Executive Studies';
   <div class="glow-aura-2"></div>
 
   <!-- Common Header -->
-  <?php include 'header.php'; ?>
+  <?php
+if (session_status() === PHP_SESSION_NONE) { session_start(); } include 'header.php'; ?>
 
   <!-- Distinctive Standout Hero Section -->
   <section class="neo-hero">
@@ -837,14 +839,16 @@ $c['category']   = $c['category_name'] ?: 'Executive Studies';
               </div>
               <div class="col-md-5">
                 <div class="row g-3">
-                  <?php foreach ($c['stats'] as $st): ?>
+                  <?php
+if (session_status() === PHP_SESSION_NONE) { session_start(); } foreach ($c['stats'] as $st): ?>
                     <div class="col-6">
                       <div style="background: rgba(255,255,255,0.05); padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
                         <h4 style="color: var(--brand-primary); font-size: 1.5rem; margin: 0; font-weight: 800;"><?= htmlspecialchars($st['val']) ?></h4>
                         <small style="color: #94a3b8; font-size: 0.8rem;"><?= htmlspecialchars($st['label']) ?></small>
                       </div>
                     </div>
-                  <?php endforeach; ?>
+                  <?php
+if (session_status() === PHP_SESSION_NONE) { session_start(); } endforeach; ?>
                 </div>
               </div>
             </div>
@@ -867,7 +871,8 @@ $c['category']   = $c['category_name'] ?: 'Executive Studies';
         </div>
 
         <!-- 4 Pillar Cards -->
-        <?php foreach ($c['pillars'] as $pillar): ?>
+        <?php
+if (session_status() === PHP_SESSION_NONE) { session_start(); } foreach ($c['pillars'] as $pillar): ?>
           <div class="col-lg-3 col-md-6">
             <div class="bento-card">
               <div class="bento-icon">
@@ -877,7 +882,8 @@ $c['category']   = $c['category_name'] ?: 'Executive Studies';
               <p><?= htmlspecialchars($pillar['desc']) ?></p>
             </div>
           </div>
-        <?php endforeach; ?>
+        <?php
+if (session_status() === PHP_SESSION_NONE) { session_start(); } endforeach; ?>
       </div>
     </div>
   </section>
@@ -943,11 +949,13 @@ $c['category']   = $c['category_name'] ?: 'Executive Studies';
                 <i class="fas fa-toolbox text-warning me-2"></i> Technologies & Tooling
               </h5>
               <div class="d-flex flex-wrap gap-2">
-                <?php foreach ($c['tools'] as $tool): ?>
+                <?php
+if (session_status() === PHP_SESSION_NONE) { session_start(); } foreach ($c['tools'] as $tool): ?>
                   <span style="background: rgba(230, 169, 16, 0.12); color: var(--brand-primary); font-size: 0.85rem; padding: 5px 12px; border-radius: 6px; border: 1px solid rgba(230, 169, 16, 0.25);">
                     <?= htmlspecialchars($tool) ?>
                   </span>
-                <?php endforeach; ?>
+                <?php
+if (session_status() === PHP_SESSION_NONE) { session_start(); } endforeach; ?>
               </div>
             </div>
 
@@ -961,7 +969,8 @@ $c['category']   = $c['category_name'] ?: 'Executive Studies';
 
         <div class="col-lg-8">
           <div class="timeline-wrap">
-            <?php foreach ($c['curriculum'] as $module): ?>
+            <?php
+if (session_status() === PHP_SESSION_NONE) { session_start(); } foreach ($c['curriculum'] as $module): ?>
               <div class="timeline-item">
                 <div class="timeline-num"><?= htmlspecialchars($module['num']) ?></div>
                 <div class="timeline-card">
@@ -970,15 +979,18 @@ $c['category']   = $c['category_name'] ?: 'Executive Studies';
                     <span class="timeline-duration"><?= htmlspecialchars($module['duration']) ?></span>
                   </div>
                   <div class="topic-pills">
-                    <?php foreach ($module['topics'] as $topic): ?>
+                    <?php
+if (session_status() === PHP_SESSION_NONE) { session_start(); } foreach ($module['topics'] as $topic): ?>
                       <span class="topic-pill">
                         <i class="fas fa-circle-check text-warning me-1"></i> <?= htmlspecialchars($topic) ?>
                       </span>
-                    <?php endforeach; ?>
+                    <?php
+if (session_status() === PHP_SESSION_NONE) { session_start(); } endforeach; ?>
                   </div>
                 </div>
               </div>
-            <?php endforeach; ?>
+            <?php
+if (session_status() === PHP_SESSION_NONE) { session_start(); } endforeach; ?>
           </div>
         </div>
       </div>
@@ -1048,7 +1060,8 @@ $c['category']   = $c['category_name'] ?: 'Executive Studies';
       </div>
 
       <div class="career-grid">
-        <?php foreach ($c['careers'] as $job): ?>
+        <?php
+if (session_status() === PHP_SESSION_NONE) { session_start(); } foreach ($c['careers'] as $job): ?>
           <div class="career-box">
             <div>
               <div class="d-flex justify-content-between align-items-center mb-2">
@@ -1064,7 +1077,8 @@ $c['category']   = $c['category_name'] ?: 'Executive Studies';
               <small style="color: #94a3b8;">Expected Annual Package</small>
             </div>
           </div>
-        <?php endforeach; ?>
+        <?php
+if (session_status() === PHP_SESSION_NONE) { session_start(); } endforeach; ?>
       </div>
     </div>
   </section>
@@ -1175,7 +1189,8 @@ $c['category']   = $c['category_name'] ?: 'Executive Studies';
   </div>
 
   <!-- Common Footer -->
-  <?php include 'footer.php'; ?>
+  <?php
+if (session_status() === PHP_SESSION_NONE) { session_start(); } include 'footer.php'; ?>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>

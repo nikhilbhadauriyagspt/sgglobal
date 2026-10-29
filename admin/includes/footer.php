@@ -5,19 +5,19 @@
       <footer class="admin-footer-bar">
         <div class="row align-items-center">
           <div class="col-md-6 text-center text-md-start mb-2 mb-md-0">
-            <span class="text-muted" style="font-size: 0.85rem;">
-              &copy; <?= date('Y') ?> <strong class="text-warning">Skill Grow Institution</strong>. Centralized Administrative Portal.
+            <span class="text-muted" style="font-size: 0.83rem;">
+              &copy; <?= date('Y') ?> <strong class="text-warning">Skill Grow Institution</strong>. Executive Administrative Portal.
             </span>
           </div>
           <div class="col-md-6 text-center text-md-end">
-            <span class="badge rounded-pill bg-dark border border-secondary px-3 py-2 text-muted" style="font-size: 0.75rem;">
-              <i class="fas fa-server text-success me-1"></i> Laragon MySQL 8.4 • PHP 8.3
+            <span class="badge rounded-pill bg-dark border border-secondary px-3 py-2 text-muted" style="font-size: 0.74rem;">
+              <i class="fas fa-server text-success me-1"></i> MySQL 8.4 • PHP 8.3 • ApexCharts Engine
             </span>
           </div>
         </div>
       </footer>
 
-    </div><!-- End admin-content -->
+    </div><!-- End admin-main -->
   </div><!-- End admin-layout-wrapper -->
 
   <!-- Bootstrap 5 Bundle -->
@@ -27,43 +27,47 @@
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       const sidebar = document.getElementById('adminSidebar');
-      const toggleBtn = document.getElementById('sidebarToggle');
+      const toggleBtn = document.getElementById('sidebarToggle') || document.getElementById('sidebarToggleBtn');
       const closeBtn = document.getElementById('sidebarCloseBtn');
       const overlay = document.getElementById('sidebarOverlay');
       const wrapper = document.querySelector('.admin-layout-wrapper');
 
       // Check saved sidebar state for desktop
-      if (localStorage.getItem('adminSidebarCollapsed') === 'true' && window.innerWidth >= 992) {
+      if (wrapper && localStorage.getItem('adminSidebarCollapsed') === 'true' && window.innerWidth >= 992) {
         wrapper.classList.add('sidebar-collapsed');
       }
 
       // Sidebar Toggle Handler
-      if (toggleBtn) {
-        toggleBtn.addEventListener('click', function() {
+      if (toggleBtn && sidebar) {
+        toggleBtn.addEventListener('click', function(e) {
+          e.preventDefault();
           if (window.innerWidth < 992) {
-            // Mobile: toggle active drawer
             sidebar.classList.toggle('show-mobile');
+            sidebar.classList.toggle('show-sidebar');
             if (overlay) overlay.classList.toggle('show');
-          } else {
-            // Desktop: toggle mini/collapsed sidebar
+          } else if (wrapper) {
             wrapper.classList.toggle('sidebar-collapsed');
             localStorage.setItem('adminSidebarCollapsed', wrapper.classList.contains('sidebar-collapsed'));
+            // Trigger resize for ApexCharts responsiveness
+            setTimeout(function() {
+              window.dispatchEvent(new Event('resize'));
+            }, 300);
           }
         });
       }
 
       // Mobile Close Handler
-      if (closeBtn) {
+      if (closeBtn && sidebar) {
         closeBtn.addEventListener('click', function() {
-          sidebar.classList.remove('show-mobile');
+          sidebar.classList.remove('show-mobile', 'show-sidebar');
           if (overlay) overlay.classList.remove('show');
         });
       }
 
       // Overlay click to close
-      if (overlay) {
+      if (overlay && sidebar) {
         overlay.addEventListener('click', function() {
-          sidebar.classList.remove('show-mobile');
+          sidebar.classList.remove('show-mobile', 'show-sidebar');
           overlay.classList.remove('show');
         });
       }

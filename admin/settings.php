@@ -101,256 +101,10 @@ $settings = $stmt->fetch() ?: [
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Roboto+Slab:wght@400;600;700;800&display=swap" rel="stylesheet">
 
+  <!-- Central Unified Admin Stylesheet -->
+  <link rel="stylesheet" href="assets/css/admin.css">
+
   <style>
-    :root {
-      --admin-primary: #e6a910;
-      --admin-primary-hover: #cf9507;
-      --admin-navy: #002365;
-      --admin-dark-bg: #060b1b;
-      --admin-sidebar-bg: #091026;
-      --admin-card-bg: #0c1634;
-      --admin-border: #1a274e;
-      --admin-border-subtle: rgba(255, 255, 255, 0.08);
-      --text-main: #f1f5f9;
-      --text-muted: #94a3b8;
-      --font-heading: 'Roboto Slab', serif;
-      --font-body: 'Plus Jakarta Sans', sans-serif;
-      --sidebar-width: 260px;
-      --sidebar-collapsed-width: 80px;
-      --topbar-height: 72px;
-    }
-
-    * {
-      box-sizing: border-box;
-      box-shadow: none !important;
-    }
-
-    body {
-      font-family: var(--font-body);
-      background-color: var(--admin-dark-bg);
-      color: var(--text-main);
-      margin: 0;
-      overflow-x: hidden;
-      min-height: 100vh;
-    }
-
-    .admin-layout-wrapper {
-      display: flex;
-      min-height: 100vh;
-      position: relative;
-    }
-
-    /* Sidebar styles */
-    .admin-sidebar {
-      width: var(--sidebar-width);
-      background-color: var(--admin-sidebar-bg);
-      border-right: 1px solid var(--admin-border);
-      display: flex;
-      flex-direction: column;
-      position: fixed;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      z-index: 1050;
-      transition: width 0.3s ease, transform 0.3s ease;
-    }
-
-    .sidebar-brand-box {
-      height: var(--topbar-height);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 20px;
-      border-bottom: 1px solid var(--admin-border);
-    }
-
-    .brand-link {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      text-decoration: none;
-    }
-
-    .brand-logo-img {
-      height: 42px;
-      width: auto;
-      object-fit: contain;
-    }
-
-    .brand-name {
-      font-family: var(--font-heading);
-      font-size: 1.05rem;
-      font-weight: 700;
-      color: #ffffff;
-      line-height: 1.2;
-    }
-
-    .brand-sub {
-      font-size: 0.72rem;
-      color: var(--admin-primary);
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      font-weight: 600;
-    }
-
-    .sidebar-nav-container {
-      flex: 1;
-      padding: 20px 14px;
-      overflow-y: auto;
-    }
-
-    .nav-section-title {
-      font-size: 0.68rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: #64748b;
-      margin: 18px 10px 8px;
-    }
-
-    .sidebar-menu {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-
-    .menu-link {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 11px 14px;
-      border-radius: 10px;
-      color: #cbd5e1;
-      text-decoration: none;
-      font-size: 0.9rem;
-      font-weight: 500;
-      transition: all 0.2s ease;
-    }
-
-    .menu-link:hover, .menu-item.active .menu-link {
-      background: rgba(230, 169, 16, 0.12);
-      border-left: 3px solid var(--admin-primary);
-      color: var(--admin-primary);
-      font-weight: 700;
-    }
-
-    .menu-icon {
-      font-size: 1.05rem;
-      width: 22px;
-      text-align: center;
-    }
-
-    .sidebar-user-footer {
-      padding: 16px;
-      border-top: 1px solid var(--admin-border);
-      background: rgba(0, 0, 0, 0.2);
-    }
-
-    .user-info-box {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .user-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 10px;
-      background: rgba(230, 169, 16, 0.15);
-      border: 1px solid rgba(230, 169, 16, 0.3);
-      color: var(--admin-primary);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.1rem;
-    }
-
-    .user-name {
-      font-size: 0.88rem;
-      font-weight: 700;
-      color: #ffffff;
-      line-height: 1.2;
-    }
-
-    .user-role {
-      font-size: 0.72rem;
-      color: var(--text-muted);
-    }
-
-    .btn-sidebar-logout {
-      color: #ef4444;
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.2);
-      padding: 8px 10px;
-      border-radius: 8px;
-      font-size: 0.85rem;
-      text-decoration: none;
-    }
-
-    /* Main Area */
-    .admin-main {
-      flex: 1;
-      margin-left: var(--sidebar-width);
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-    }
-
-    .admin-topbar {
-      height: var(--topbar-height);
-      background: rgba(9, 16, 38, 0.85);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--admin-border);
-      position: sticky;
-      top: 0;
-      z-index: 1020;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 28px;
-    }
-
-    .btn-toggle-sidebar {
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid var(--admin-border);
-      color: #ffffff;
-      width: 42px;
-      height: 42px;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-    }
-
-    .page-title-text {
-      font-family: var(--font-heading);
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: #ffffff;
-      margin: 0;
-    }
-
-    .breadcrumb {
-      font-size: 0.78rem;
-      margin: 0;
-    }
-
-    .breadcrumb a {
-      color: var(--text-muted);
-      text-decoration: none;
-    }
-
-    .breadcrumb .active {
-      color: var(--admin-primary);
-    }
-
-    .admin-content {
-      padding: 28px;
-      flex: 1;
-    }
-
-    /* Settings Bento Box */
     .settings-bento {
       background: var(--admin-card-bg);
       border: 1px solid var(--admin-border);
@@ -366,11 +120,13 @@ $settings = $stmt->fetch() ?: [
       margin-bottom: 20px;
       padding-bottom: 14px;
       border-bottom: 1px solid var(--admin-border-subtle);
+      flex-wrap: wrap;
+      gap: 10px;
     }
 
     .settings-bento-title {
       font-family: var(--font-heading);
-      font-size: 1.25rem;
+      font-size: 1.2rem;
       font-weight: 700;
       color: #ffffff;
       margin: 0;
@@ -379,30 +135,8 @@ $settings = $stmt->fetch() ?: [
       gap: 10px;
     }
 
-    .form-label {
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: #cbd5e1;
-      margin-bottom: 6px;
-    }
-
-    .form-control, .form-select {
-      background: rgba(6, 11, 27, 0.7);
-      border: 1px solid var(--admin-border);
-      color: #ffffff;
-      border-radius: 10px;
-      padding: 11px 14px;
-      font-size: 0.92rem;
-    }
-
-    .form-control:focus, .form-select:focus {
-      background: rgba(6, 11, 27, 0.95);
-      border-color: var(--admin-primary);
-      color: #ffffff;
-    }
-
     .mode-switch-badge {
-      font-size: 0.78rem;
+      font-size: 0.76rem;
       font-weight: 700;
       padding: 5px 12px;
       border-radius: 50px;
@@ -411,11 +145,11 @@ $settings = $stmt->fetch() ?: [
     }
 
     .btn-save-settings {
-      background: linear-gradient(135deg, #f59e0b, #e6a910);
-      color: #060b1b;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #050a18;
       font-weight: 700;
-      font-size: 1rem;
-      padding: 13px 32px;
+      font-size: 0.95rem;
+      padding: 12px 28px;
       border-radius: 12px;
       border: none;
       cursor: pointer;
@@ -429,17 +163,12 @@ $settings = $stmt->fetch() ?: [
       background: #fbbf24;
       transform: translateY(-2px);
     }
-
-    .admin-footer-bar {
-      padding: 20px 28px;
-      border-top: 1px solid var(--admin-border);
-      background: rgba(6, 11, 27, 0.9);
-      margin-top: auto;
-    }
   </style>
 </head>
 
 <body>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
   <div class="admin-layout-wrapper">
     
@@ -449,28 +178,7 @@ $settings = $stmt->fetch() ?: [
     <div class="admin-main">
       
       <!-- Topbar Header -->
-      <header class="admin-topbar">
-        <div class="d-flex align-items-center gap-3">
-          <button type="button" class="btn-toggle-sidebar" id="sidebarToggle">
-            <i class="fas fa-bars-staggered"></i>
-          </button>
-          <div>
-            <h1 class="page-title-text">System & Gateway Settings</h1>
-            <nav aria-label="breadcrumb">
-              <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="index.php">Dashboard</a></li>
-                <li class="breadcrumb-item active">Settings</li>
-              </ol>
-            </nav>
-          </div>
-        </div>
-
-        <div>
-          <a href="index.php" class="btn btn-outline-light btn-sm px-3 py-2 rounded-3">
-            <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
-          </a>
-        </div>
-      </header>
+      <?php require_once __DIR__ . '/includes/header.php'; ?>
 
       <main class="admin-content">
         
@@ -623,7 +331,3 @@ $settings = $stmt->fetch() ?: [
       </main>
 
       <?php require_once __DIR__ . '/includes/footer.php'; ?>
-    </div>
-  </div>
-</body>
-</html>

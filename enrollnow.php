@@ -100,59 +100,6 @@ $studentId    = $_SESSION['student_id'] ?? '';
       flex-direction: column;
     }
 
-    /* Header Dark Mode Precision Styles */
-    .topbar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      z-index: 1030;
-      background: #002365 !important;
-    }
-
-    .navbar {
-      position: fixed !important;
-      top: 44px !important;
-      left: 0;
-      width: 100% !important;
-      z-index: 1025 !important;
-      background: rgba(7, 14, 36, 0.94) !important;
-      backdrop-filter: blur(12px) !important;
-      -webkit-backdrop-filter: blur(12px) !important;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      padding: 6px 0;
-      transition: background 0.3s ease;
-    }
-
-    .navbar.scrolled {
-      background: #002365 !important;
-      border-bottom: 1px solid rgba(230, 169, 16, 0.3);
-    }
-
-    .navbar .navbar-brand img {
-      height: 55px;
-      width: auto;
-      object-fit: contain;
-    }
-
-    .navbar-nav .nav-link {
-      color: #cbd5e1 !important;
-      font-weight: 600;
-      padding: 8px 14px !important;
-    }
-
-    .navbar-nav .nav-link:hover, .navbar-nav .nav-link.active {
-      color: var(--brand-primary) !important;
-    }
-
-    .navbar-toggler {
-      border-color: rgba(255, 255, 255, 0.2);
-    }
-
-    .navbar-toggler-icon {
-      filter: invert(1);
-    }
-
     /* Page Hero Banner - High Top Clearance for Fixed Header */
     .enroll-hero {
       background: radial-gradient(circle at 50% 0%, #10214d 0%, var(--brand-dark) 80%);
