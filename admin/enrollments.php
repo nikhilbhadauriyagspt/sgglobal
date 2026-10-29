@@ -184,6 +184,24 @@ $coursesList = $pdo->query("SELECT title, slug FROM courses ORDER BY title ASC")
       font-size: 0.82rem;
     }
 
+    /* Candidate Avatar Thumbnail */
+    .student-avatar-thumb {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      object-fit: cover;
+      border: 1.5px solid rgba(245, 158, 11, 0.4);
+      background: #002365;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #fbbf24;
+      font-weight: 700;
+      font-size: 13px;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
     .student-btn-link {
       background: none;
       border: none;
@@ -327,6 +345,28 @@ $coursesList = $pdo->query("SELECT title, slug FROM courses ORDER BY title ASC")
       letter-spacing: 0.5px;
     }
 
+    .admin-search-icon-box {
+      background: #0b1736 !important;
+      border-color: #233560 !important;
+      color: #fbbf24 !important;
+      font-size: 0.85rem !important;
+    }
+    .admin-search-input {
+      background: #070e24 !important;
+      border-color: #233560 !important;
+      color: #ffffff !important;
+    }
+    .admin-search-input:focus {
+      background: #091330 !important;
+      border-color: #fbbf24 !important;
+      color: #ffffff !important;
+    }
+    .admin-search-select {
+      background: #070e24 !important;
+      border-color: #233560 !important;
+      color: #ffffff !important;
+    }
+
     .student-avatar-initials {
       width: 82px;
       height: 82px;
@@ -440,13 +480,13 @@ $coursesList = $pdo->query("SELECT title, slug FROM courses ORDER BY title ASC")
           <form method="GET" action="enrollments.php" class="row g-2 align-items-center">
             <div class="col-md-5">
               <div class="input-group input-group-sm">
-                <span class="input-group-text bg-dark border-secondary text-muted"><i class="fas fa-search"></i></span>
-                <input type="text" class="form-control form-control-sm bg-dark border-secondary text-white" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Search student name, email, phone, ID, or enrollment ID...">
+                <span class="input-group-text admin-search-icon-box"><i class="fas fa-search" style="color: #fbbf24;"></i></span>
+                <input type="text" class="form-control form-control-sm admin-search-input" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Search student name, email, phone, ID, or enrollment ID...">
               </div>
             </div>
 
             <div class="col-md-4">
-              <select class="form-select form-select-sm bg-dark border-secondary text-white" name="course">
+              <select class="form-select form-select-sm admin-search-select" name="course">
                 <option value="">All Academic Programs</option>
                 <?php foreach ($coursesList as $cl): ?>
                   <option value="<?= htmlspecialchars($cl['slug']) ?>" <?= ($filterCourse === $cl['slug']) ? 'selected' : '' ?>>
@@ -482,12 +522,11 @@ $coursesList = $pdo->query("SELECT title, slug FROM courses ORDER BY title ASC")
             <table class="admin-table">
               <thead>
                 <tr>
-                  <th>Enrollment ID</th>
-                  <th>Student Info & Credentials</th>
+                  <th>Student</th>
+                  <th>Enrollment & Student ID</th>
                   <th>Enrolled Academic Course</th>
                   <th>Tuition Fee</th>
-                  <th>Payment Gateway</th>
-                  <th>Date & Time</th>
+                  <th>Gateway</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -521,24 +560,42 @@ $coursesList = $pdo->query("SELECT title, slug FROM courses ORDER BY title ASC")
                     $jsonPayload = htmlspecialchars(json_encode($studentData, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP), ENT_QUOTES, 'UTF-8');
                   ?>
                     <tr>
-                      <!-- 1. Enrollment ID -->
+                      <!-- 1. Student / Candidate (Avatar + Name + Contact) -->
                       <td>
-                        <span class="enrollment-badge"><?= htmlspecialchars($enr['enrollment_id']) ?></span>
+                        <div class="d-flex align-items-center gap-2">
+                          <?php 
+                            $avatarImg = !empty($enr['student_avatar']) ? $enr['student_avatar'] : (!empty($enr['photo_doc']) ? $enr['photo_doc'] : '');
+                          ?>
+                          <?php if (!empty($avatarImg) && file_exists(__DIR__ . '/../' . $avatarImg)): ?>
+                            <img src="../<?= htmlspecialchars($avatarImg) ?>" alt="Photo" class="student-avatar-thumb" onclick='openStudentDossier(<?= $jsonPayload ?>)' title="Click to view Dossier">
+                          <?php else: ?>
+                            <span class="student-avatar-thumb" onclick='openStudentDossier(<?= $jsonPayload ?>)' title="Click to view Dossier">
+                              <?= strtoupper(substr($enr['student_name'], 0, 2)) ?>
+                            </span>
+                          <?php endif; ?>
+                          <div>
+                            <div>
+                              <button type="button" class="student-btn-link" onclick='openStudentDossier(<?= $jsonPayload ?>)' title="View Complete Student Dossier">
+                                <?= htmlspecialchars($enr['student_name']) ?>
+                              </button>
+                            </div>
+                            <div class="text-light-contrast">
+                              <i class="fas fa-envelope text-warning me-1"></i><?= htmlspecialchars($enr['student_email']) ?>
+                              &bull; <i class="fas fa-phone text-success ms-1 me-1"></i><?= htmlspecialchars($enr['student_phone']) ?>
+                            </div>
+                          </div>
+                        </div>
                       </td>
 
-                      <!-- 2. Student Info (Clickable for full dossier) -->
+                      <!-- 2. Enrollment & Student ID -->
                       <td>
                         <div>
-                          <button type="button" class="student-btn-link" onclick='openStudentDossier(<?= $jsonPayload ?>)' title="Click to view full student credentials & dossier">
-                            <i class="fas fa-user-circle text-warning"></i>
-                            <?= htmlspecialchars($enr['student_name']) ?>
-                          </button>
+                          <span class="enrollment-badge"><?= htmlspecialchars($enr['enrollment_id']) ?></span>
                         </div>
-                        
                         <div class="d-flex align-items-center gap-1 mt-1 flex-wrap">
                           <?php if (!empty($enr['student_id'])): ?>
-                            <span class="stu-id-badge" onclick='openStudentDossier(<?= $jsonPayload ?>)' title="Click to view student details">
-                              <?= htmlspecialchars($enr['student_id']) ?>
+                            <span class="stu-id-badge" onclick='openStudentDossier(<?= $jsonPayload ?>)' title="Click to view Dossier">
+                              ID: <?= htmlspecialchars($enr['student_id']) ?>
                             </span>
                           <?php endif; ?>
                           <?php if (!empty($enr['application_id'])): ?>
@@ -547,21 +604,17 @@ $coursesList = $pdo->query("SELECT title, slug FROM courses ORDER BY title ASC")
                             </span>
                           <?php endif; ?>
                         </div>
-
-                        <div class="text-light-contrast mt-1">
-                          <i class="fas fa-envelope text-muted me-1"></i> <?= htmlspecialchars($enr['student_email']) ?>
-                        </div>
-                        <div class="text-light-contrast">
-                          <i class="fas fa-phone-alt text-success me-1"></i> <?= htmlspecialchars($enr['student_phone']) ?>
-                        </div>
                       </td>
 
                       <!-- 3. Enrolled Course -->
                       <td>
-                        <div class="fw-bold text-white mb-1" style="font-size: 0.88rem;"><?= htmlspecialchars($enr['course_name']) ?></div>
-                        <span class="badge bg-dark border border-secondary text-white-50 font-monospace" style="font-size: 0.70rem;">
-                          <?= htmlspecialchars($enr['course_slug']) ?>
-                        </span>
+                        <div class="fw-bold text-white mb-1" style="font-size: 0.88rem;">
+                          <?= htmlspecialchars($enr['course_name']) ?>
+                        </div>
+                        <div class="text-light-contrast">
+                          <i class="far fa-calendar-alt text-warning me-1"></i><?= date('d M, Y', strtotime($enr['enrolled_at'])) ?>
+                          &bull; <small class="text-muted"><?= date('h:i A', strtotime($enr['enrolled_at'])) ?></small>
+                        </div>
                       </td>
 
                       <!-- 4. Tuition Fee -->
@@ -571,8 +624,8 @@ $coursesList = $pdo->query("SELECT title, slug FROM courses ORDER BY title ASC")
                             ₹<?= number_format((float)$enr['fee_amount'], 2) ?>
                           </span>
                         </div>
-                        <span class="badge <?= ($enr['payment_status'] === 'paid') ? 'bg-success' : 'bg-warning' ?> px-2 py-0 mt-1" style="font-size: 0.68rem; font-weight: 800;">
-                          <?= strtoupper($enr['payment_status']) ?>
+                        <span class="badge bg-success text-white px-2 py-0 mt-1" style="font-size: 0.68rem; font-weight: 800;">
+                          PAID
                         </span>
                       </td>
 
@@ -583,22 +636,12 @@ $coursesList = $pdo->query("SELECT title, slug FROM courses ORDER BY title ASC")
                             <i class="fas fa-bolt text-warning me-1"></i><?= htmlspecialchars($enr['payment_method']) ?>
                           </span>
                         </div>
-                        <div class="font-monospace mt-1" style="font-size: 0.75rem; color: #38bdf8;">
-                          <?= htmlspecialchars($enr['razorpay_payment_id'] ?: 'N/A') ?>
+                        <div class="font-monospace mt-1" style="font-size: 0.72rem; color: #38bdf8;">
+                          <?= htmlspecialchars($enr['razorpay_payment_id'] ?: 'Direct') ?>
                         </div>
                       </td>
 
-                      <!-- 6. Enrolled Date -->
-                      <td>
-                        <div class="text-light-contrast">
-                          <i class="far fa-calendar-alt text-warning me-1"></i> <?= date('d M, Y', strtotime($enr['enrolled_at'])) ?>
-                        </div>
-                        <small class="text-muted" style="font-size: 0.75rem;">
-                          <i class="far fa-clock me-1"></i> <?= date('h:i A', strtotime($enr['enrolled_at'])) ?>
-                        </small>
-                      </td>
-
-                      <!-- 7. Actions -->
+                      <!-- 6. Compact Actions -->
                       <td>
                         <div class="d-flex align-items-center gap-1">
                           <!-- Open Student Dossier Modal Button -->
@@ -625,7 +668,7 @@ $coursesList = $pdo->query("SELECT title, slug FROM courses ORDER BY title ASC")
                   <?php endforeach; ?>
                 <?php else: ?>
                   <tr>
-                    <td colspan="7" class="text-center py-5 text-muted">
+                    <td colspan="6" class="text-center py-5 text-muted">
                       <i class="fas fa-folder-open fa-2x mb-3 d-block text-secondary"></i>
                       No course enrollments match the selected filters.
                     </td>
