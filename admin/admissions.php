@@ -95,32 +95,87 @@ $coursesList = $pdo->query("SELECT title FROM courses ORDER BY title ASC")->fetc
   <link rel="stylesheet" href="assets/css/admin.css">
 
   <style>
-    .doc-pill-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 0.72rem;
-      font-weight: 600;
-      padding: 4px 8px;
-      border-radius: 6px;
-      text-decoration: none;
-      transition: all 0.2s;
-      white-space: nowrap;
+    /* High-Contrast Readability Enhancements */
+    .stat-metric-title {
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      color: #e2e8f0;
+      margin-bottom: 4px;
     }
-    .doc-pill-photo { background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); color: #60a5fa; }
-    .doc-pill-aadhaar { background: rgba(230, 169, 16, 0.15); border: 1px solid rgba(230, 169, 16, 0.3); color: #fbbf24; }
-    .doc-pill-marksheet { background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399; }
-    .doc-pill-btn:hover { transform: translateY(-1px); color: #fff; }
-    
-    .status-select-sm {
-      background: #060b1b !important;
-      border: 1px solid #1a274e !important;
-      color: #fff !important;
+
+    .text-light-contrast {
+      color: #e2e8f0 !important;
+      font-size: 0.85rem;
+    }
+
+    .text-dim-readable {
+      color: #94a3b8 !important;
       font-size: 0.78rem;
-      padding: 4px 8px;
-      border-radius: 6px;
+    }
+
+    .status-select-sm {
+      background: #09122c !important;
+      border: 1px solid #2a3c6d !important;
+      color: #ffffff !important;
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 6px 10px;
+      border-radius: 8px;
       width: auto;
       display: inline-block;
+      cursor: pointer;
+    }
+    .status-select-sm:focus {
+      border-color: var(--admin-primary) !important;
+    }
+
+    /* Modal Document Preview Styling */
+    .doc-preview-card {
+      background: #070e24;
+      border: 1px solid #1a274e;
+      border-radius: 12px;
+      padding: 16px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .doc-preview-thumb-box {
+      width: 100%;
+      height: 190px;
+      background: #040817;
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px dashed #22325c;
+      margin-bottom: 12px;
+      position: relative;
+    }
+    .doc-preview-thumb-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .doc-preview-thumb-box img:hover {
+      transform: scale(1.03);
+    }
+    .doc-preview-thumb-box .pdf-placeholder {
+      text-align: center;
+      color: #ef4444;
+    }
+    .doc-badge-pill {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 50px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
   </style>
 </head>
@@ -162,52 +217,52 @@ $coursesList = $pdo->query("SELECT title FROM courses ORDER BY title ASC")->fetc
           </div>
         <?php endif; ?>
 
-        <!-- Stat Cards Row -->
+        <!-- Stat Cards Row - High Contrast and Clear -->
         <div class="row g-3 mb-4">
           <div class="col-md-3">
-            <div class="stat-metric-card">
+            <div class="stat-metric-card" style="border-left: 4px solid var(--admin-primary);">
               <div class="stat-metric-icon">
                 <i class="fas fa-user-graduate"></i>
               </div>
               <div>
-                <div class="text-muted" style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700;">Total Registrations</div>
-                <div class="text-white fw-bold" style="font-size: 1.5rem; font-family: var(--font-heading);"><?= number_format($statAdm['total_registered']) ?></div>
+                <div class="stat-metric-title">Total Registrations</div>
+                <div class="text-white fw-bold" style="font-size: 1.6rem; font-family: var(--font-heading);"><?= number_format($statAdm['total_registered']) ?></div>
               </div>
             </div>
           </div>
 
           <div class="col-md-3">
-            <div class="stat-metric-card">
-              <div class="stat-metric-icon" style="background: rgba(16, 185, 129, 0.12); color: #10b981;">
+            <div class="stat-metric-card" style="border-left: 4px solid #10b981;">
+              <div class="stat-metric-icon" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">
                 <i class="fas fa-id-badge"></i>
               </div>
               <div>
-                <div class="text-muted" style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700;">Verified Students</div>
-                <div class="text-success fw-bold" style="font-size: 1.5rem; font-family: var(--font-heading);"><?= number_format($statAdm['total_verified']) ?></div>
+                <div class="stat-metric-title text-success">Verified Students</div>
+                <div class="text-success fw-bold" style="font-size: 1.6rem; font-family: var(--font-heading);"><?= number_format($statAdm['total_verified']) ?></div>
               </div>
             </div>
           </div>
 
           <div class="col-md-3">
-            <div class="stat-metric-card">
-              <div class="stat-metric-icon" style="background: rgba(245, 158, 11, 0.12); color: #f59e0b;">
+            <div class="stat-metric-card" style="border-left: 4px solid #f59e0b;">
+              <div class="stat-metric-icon" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;">
                 <i class="fas fa-clock"></i>
               </div>
               <div>
-                <div class="text-muted" style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700;">Under Review</div>
-                <div class="text-warning fw-bold" style="font-size: 1.5rem; font-family: var(--font-heading);"><?= number_format($statAdm['total_review']) ?></div>
+                <div class="stat-metric-title text-warning">Under Review</div>
+                <div class="text-warning fw-bold" style="font-size: 1.6rem; font-family: var(--font-heading);"><?= number_format($statAdm['total_review']) ?></div>
               </div>
             </div>
           </div>
 
           <div class="col-md-3">
-            <div class="stat-metric-card">
-              <div class="stat-metric-icon" style="background: rgba(59, 130, 246, 0.12); color: #3b82f6;">
+            <div class="stat-metric-card" style="border-left: 4px solid #38bdf8;">
+              <div class="stat-metric-icon" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">
                 <i class="fas fa-indian-rupee-sign"></i>
               </div>
               <div>
-                <div class="text-muted" style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700;">Registration Fees</div>
-                <div class="text-info fw-bold" style="font-size: 1.5rem; font-family: var(--font-heading);">₹<?= number_format((float)$statAdm['total_fee'], 0) ?></div>
+                <div class="stat-metric-title text-info">Registration Fees</div>
+                <div class="text-info fw-bold" style="font-size: 1.6rem; font-family: var(--font-heading);">₹<?= number_format((float)$statAdm['total_fee'], 0) ?></div>
               </div>
             </div>
           </div>
@@ -218,7 +273,7 @@ $coursesList = $pdo->query("SELECT title FROM courses ORDER BY title ASC")->fetc
           <form method="GET" action="admissions.php" class="row g-2 align-items-center">
             <div class="col-md-4">
               <div class="input-group">
-                <span class="input-group-text bg-dark border-secondary text-muted"><i class="fas fa-search"></i></span>
+                <span class="input-group-text bg-dark border-secondary text-warning"><i class="fas fa-search"></i></span>
                 <input type="text" class="form-control" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Search student name, email, phone, App ID, Student ID, Aadhaar...">
               </div>
             </div>
@@ -253,12 +308,15 @@ $coursesList = $pdo->query("SELECT title FROM courses ORDER BY title ASC")->fetc
           </form>
         </div>
 
-        <!-- Registered Students Table -->
+        <!-- Registered Students Table (Cleaned up: Uploaded Documents removed from table, shown in Dossier Modal) -->
         <div class="bento-card">
           <div class="bento-header">
             <h2 class="bento-title">
               <i class="fas fa-users-gear text-warning me-2"></i> All Registered Candidates (<?= count($admissions) ?>)
             </h2>
+            <div class="text-white-50" style="font-size: 0.85rem;">
+              Click <strong class="text-warning">View Details</strong> to preview candidate documents (Photo, Aadhaar & Marksheet).
+            </div>
           </div>
 
           <div class="table-responsive">
@@ -269,8 +327,7 @@ $coursesList = $pdo->query("SELECT title FROM courses ORDER BY title ASC")->fetc
                   <th>App ID & Student ID</th>
                   <th>Applied Course</th>
                   <th>Qualification & Aadhaar</th>
-                  <th>Fee Paid</th>
-                  <th>Uploaded Documents</th>
+                  <th>Fee Paid & Tx ID</th>
                   <th>Admission Status</th>
                   <th>Actions</th>
                 </tr>
@@ -283,7 +340,7 @@ $coursesList = $pdo->query("SELECT title FROM courses ORDER BY title ASC")->fetc
                       <td>
                         <div class="d-flex align-items-center gap-3">
                           <?php if (!empty($adm['photo_doc']) && file_exists(__DIR__ . '/../' . $adm['photo_doc'])): ?>
-                            <a href="../<?= htmlspecialchars($adm['photo_doc']) ?>" target="_blank" title="View Full Photo">
+                            <a href="javascript:void(0)" onclick="openDossierModal(<?= htmlspecialchars(json_encode($adm)) ?>)" title="View Student Profile">
                               <img src="../<?= htmlspecialchars($adm['photo_doc']) ?>" alt="Photo" class="student-avatar-thumb">
                             </a>
                           <?php else: ?>
@@ -292,9 +349,13 @@ $coursesList = $pdo->query("SELECT title FROM courses ORDER BY title ASC")->fetc
                             </span>
                           <?php endif; ?>
                           <div>
-                            <div class="fw-bold text-white"><?= htmlspecialchars($adm['full_name']) ?></div>
-                            <small class="text-muted d-block"><?= htmlspecialchars($adm['email']) ?></small>
-                            <small class="text-warning"><i class="fas fa-phone me-1"></i><?= htmlspecialchars($adm['phone']) ?></small>
+                            <div class="fw-bold text-white fs-6"><?= htmlspecialchars($adm['full_name']) ?></div>
+                            <div class="text-light-contrast mt-1">
+                              <i class="fas fa-envelope text-warning me-1"></i><?= htmlspecialchars($adm['email']) ?>
+                            </div>
+                            <div class="text-light-contrast mt-1">
+                              <i class="fas fa-phone text-success me-1"></i><?= htmlspecialchars($adm['phone']) ?>
+                            </div>
                           </div>
                         </div>
                       </td>
@@ -303,58 +364,39 @@ $coursesList = $pdo->query("SELECT title FROM courses ORDER BY title ASC")->fetc
                       <td>
                         <div><span class="enrollment-badge"><?= htmlspecialchars($adm['application_id']) ?></span></div>
                         <?php if (!empty($adm['student_id'])): ?>
-                          <div class="mt-1 font-monospace text-info" style="font-size: 0.78rem;">
+                          <div class="mt-1 font-monospace text-info fw-bold" style="font-size: 0.82rem;">
                             ID: <?= htmlspecialchars($adm['student_id']) ?>
                           </div>
                         <?php else: ?>
-                          <small class="text-muted">ID: Pending</small>
+                          <div class="mt-1 font-monospace text-muted" style="font-size: 0.78rem;">ID: Pending</div>
                         <?php endif; ?>
                       </td>
 
                       <!-- Applied Course -->
                       <td>
-                        <div class="text-white fw-semibold" style="font-size: 0.88rem;">
+                        <div class="text-white fw-bold" style="font-size: 0.92rem;">
                           <?= htmlspecialchars($adm['course_name']) ?>
                         </div>
-                        <small class="text-muted"><?= date('d M, Y', strtotime($adm['created_at'])) ?></small>
+                        <div class="text-light-contrast mt-1" style="font-size: 0.82rem;">
+                          <i class="fas fa-calendar-alt text-warning me-1"></i><?= date('d M, Y', strtotime($adm['created_at'])) ?>
+                        </div>
                       </td>
 
                       <!-- Qualification & Aadhaar -->
                       <td>
-                        <span class="badge bg-dark border border-secondary text-white"><?= htmlspecialchars($adm['qualification'] ?: '12th Pass') ?></span>
-                        <div class="font-monospace text-muted mt-1" style="font-size: 0.75rem;">
+                        <span class="badge bg-dark border border-secondary text-warning fw-bold px-2 py-1" style="font-size: 0.8rem;">
+                          <?= htmlspecialchars($adm['qualification'] ?: '12th Pass') ?>
+                        </span>
+                        <div class="font-monospace text-white fw-bold mt-1" style="font-size: 0.82rem; background: rgba(255,255,255,0.06); padding: 3px 8px; border-radius: 4px; display: inline-block;">
                           <i class="fas fa-id-card me-1 text-warning"></i><?= htmlspecialchars($adm['aadhaar_number'] ?: 'N/A') ?>
                         </div>
                       </td>
 
-                      <!-- Fee Paid -->
+                      <!-- Fee Paid & Tx ID -->
                       <td>
-                        <div class="text-success fw-bold font-monospace">₹<?= number_format((float)$adm['fee_amount'], 2) ?></div>
-                        <small class="text-muted font-monospace" style="font-size: 0.72rem;"><?= htmlspecialchars($adm['razorpay_payment_id'] ?: 'Razorpay') ?></small>
-                      </td>
-
-                      <!-- Uploaded Documents (Folder storage) -->
-                      <td>
-                        <div class="d-flex flex-column gap-1">
-                          <?php if (!empty($adm['photo_doc'])): ?>
-                            <a href="../<?= htmlspecialchars($adm['photo_doc']) ?>" target="_blank" class="doc-pill-btn doc-pill-photo">
-                              <i class="fas fa-camera"></i> Photo
-                            </a>
-                          <?php else: ?>
-                            <span class="text-muted" style="font-size: 0.72rem;">No Photo</span>
-                          <?php endif; ?>
-
-                          <?php if (!empty($adm['aadhaar_doc'])): ?>
-                            <a href="../<?= htmlspecialchars($adm['aadhaar_doc']) ?>" target="_blank" class="doc-pill-btn doc-pill-aadhaar">
-                              <i class="fas fa-id-card"></i> Aadhaar
-                            </a>
-                          <?php endif; ?>
-
-                          <?php if (!empty($adm['marksheet_doc'])): ?>
-                            <a href="../<?= htmlspecialchars($adm['marksheet_doc']) ?>" target="_blank" class="doc-pill-btn doc-pill-marksheet">
-                              <i class="fas fa-file-alt"></i> Marksheet
-                            </a>
-                          <?php endif; ?>
+                        <div class="text-success fw-bold font-monospace fs-6">₹<?= number_format((float)$adm['fee_amount'], 2) ?></div>
+                        <div class="font-monospace text-info fw-semibold mt-1" style="font-size: 0.78rem;">
+                          <i class="fas fa-receipt me-1 text-secondary"></i><?= htmlspecialchars($adm['razorpay_payment_id'] ?: 'Razorpay') ?>
                         </div>
                       </td>
 
@@ -374,14 +416,14 @@ $coursesList = $pdo->query("SELECT title FROM courses ORDER BY title ASC")->fetc
 
                       <!-- Actions -->
                       <td>
-                        <div class="d-flex gap-1 flex-wrap">
-                          <button type="button" class="btn btn-sm btn-outline-info" 
+                        <div class="d-flex gap-2 flex-wrap">
+                          <button type="button" class="btn btn-sm btn-info text-dark fw-bold px-2 py-1" 
                                   onclick="openDossierModal(<?= htmlspecialchars(json_encode($adm)) ?>)" 
-                                  title="View Complete Student Dossier">
-                            <i class="fas fa-eye"></i>
+                                  title="View Complete Student Dossier & Documents">
+                            <i class="fas fa-eye me-1"></i> View Details
                           </button>
-                          <a href="../download-receipt.php?app_id=<?= urlencode($adm['application_id']) ?>" target="_blank" class="btn btn-sm btn-outline-warning" title="Admission Slip / Receipt">
-                            <i class="fas fa-file-invoice"></i>
+                          <a href="../download-receipt.php?app_id=<?= urlencode($adm['application_id']) ?>" target="_blank" class="btn btn-sm btn-warning text-dark fw-bold px-2 py-1" title="View Official Admission Receipt">
+                            <i class="fas fa-file-invoice"></i> Receipt
                           </a>
                         </div>
                       </td>
@@ -389,7 +431,7 @@ $coursesList = $pdo->query("SELECT title FROM courses ORDER BY title ASC")->fetc
                   <?php endforeach; ?>
                 <?php else: ?>
                   <tr>
-                    <td colspan="8" class="text-center py-5 text-muted">
+                    <td colspan="7" class="text-center py-5 text-white-50">
                       <i class="fas fa-user-slash fa-2x mb-3 d-block text-secondary"></i>
                       No student registration records match the criteria.
                     </td>
@@ -404,80 +446,167 @@ $coursesList = $pdo->query("SELECT title FROM courses ORDER BY title ASC")->fetc
     </div>
   </div>
 
-  <!-- COMPLETE STUDENT DOSSIER MODAL -->
+  <!-- COMPLETE STUDENT DOSSIER & DOCUMENT PREVIEW MODAL -->
   <div class="modal fade" id="dossierModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title font-monospace text-warning" id="dossierTitle">
-            <i class="fas fa-id-card me-2"></i> Student Candidate Dossier
-          </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body p-4">
-          <div class="row g-4">
-            <!-- Left Profile Card -->
-            <div class="col-md-4 text-center border-end border-secondary pe-md-4">
-              <div id="modalPhotoContainer" class="mb-3">
-                <img id="modalPhoto" src="" alt="Student Photo" class="img-fluid rounded-3 border border-secondary" style="max-height: 160px; object-fit: cover;">
-              </div>
-              <h4 id="modalName" class="text-white fw-bold mb-1" style="font-family: var(--font-heading); font-size: 1.2rem;"></h4>
-              <div id="modalAppId" class="badge bg-warning text-dark font-monospace mb-2"></div>
-              <div id="modalStuId" class="text-info font-monospace small"></div>
-              <div id="modalStatusBadge" class="mt-2"></div>
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content" style="background: #09122c !important; border: 1px solid #1e2c52 !important;">
+        <div class="modal-header" style="background: #070e24; border-bottom: 1px solid #1e2c52;">
+          <div class="d-flex align-items-center gap-3">
+            <div class="bg-warning text-dark p-2 rounded-3 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+              <i class="fas fa-id-card"></i>
             </div>
-
-            <!-- Right Details Grid -->
-            <div class="col-md-8">
-              <div class="row g-3">
-                <div class="col-sm-6">
-                  <label class="text-muted small text-uppercase fw-bold">Email Address</label>
-                  <div id="modalEmail" class="text-white fw-semibold"></div>
-                </div>
-
-                <div class="col-sm-6">
-                  <label class="text-muted small text-uppercase fw-bold">Mobile Number</label>
-                  <div id="modalPhone" class="text-white fw-semibold"></div>
-                </div>
-
-                <div class="col-12">
-                  <label class="text-muted small text-uppercase fw-bold">Applied Academic Course</label>
-                  <div id="modalCourse" class="text-warning fw-bold fs-6"></div>
-                </div>
-
-                <div class="col-sm-6">
-                  <label class="text-muted small text-uppercase fw-bold">Educational Qualification</label>
-                  <div id="modalQual" class="text-white"></div>
-                </div>
-
-                <div class="col-sm-6">
-                  <label class="text-muted small text-uppercase fw-bold">Aadhaar Card No.</label>
-                  <div id="modalAadhaar" class="text-white font-monospace"></div>
-                </div>
-
-                <div class="col-sm-6">
-                  <label class="text-muted small text-uppercase fw-bold">Registration Fee Paid</label>
-                  <div id="modalFee" class="text-success fw-bold"></div>
-                </div>
-
-                <div class="col-sm-6">
-                  <label class="text-muted small text-uppercase fw-bold">Razorpay Tx ID</label>
-                  <div id="modalTxId" class="text-white font-monospace small"></div>
-                </div>
-
-                <div class="col-12 border-top border-secondary pt-3 mt-3">
-                  <label class="text-muted small text-uppercase fw-bold mb-2 d-block">Uploaded Verification Documents</label>
-                  <div class="d-flex gap-2 flex-wrap" id="modalDocButtons"></div>
-                </div>
-              </div>
+            <div>
+              <h5 class="modal-title font-monospace text-white fw-bold mb-0">Candidate Admission Dossier</h5>
+              <div class="text-muted" style="font-size: 0.78rem;">Verified Academic Credential & Identity Verification</div>
             </div>
           </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <div class="modal-footer">
-          <a id="modalReceiptLink" href="#" target="_blank" class="btn btn-warning fw-bold">
-            <i class="fas fa-print me-1"></i> View Admission Slip
+
+        <div class="modal-body p-4">
+          <div class="row g-4">
+            
+            <!-- LEFT COLUMN: CANDIDATE SUMMARY & DETAILS -->
+            <div class="col-lg-5 border-end border-secondary pe-lg-4">
+              <div class="p-3 rounded-3 mb-4 text-center" style="background: #060b1b; border: 1px solid #1a274e;">
+                <div id="modalPhotoContainer" class="mb-3">
+                  <img id="modalPhoto" src="" alt="Student Photo" class="img-fluid rounded-3 border border-secondary shadow-sm" style="max-height: 170px; width: 140px; object-fit: cover;">
+                </div>
+                <h3 id="modalName" class="text-white fw-bold mb-1" style="font-family: var(--font-heading); font-size: 1.35rem;"></h3>
+                <div class="d-flex justify-content-center gap-2 flex-wrap mt-2">
+                  <span id="modalAppId" class="badge bg-warning text-dark font-monospace fs-6"></span>
+                  <span id="modalStuId" class="badge bg-info text-dark font-monospace fs-6"></span>
+                </div>
+                <div id="modalStatusBadge" class="mt-3"></div>
+              </div>
+
+              <div class="p-3 rounded-3" style="background: #060b1b; border: 1px solid #1a274e;">
+                <h6 class="text-warning fw-bold mb-3" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.8px;">
+                  <i class="fas fa-user me-1"></i> Personal & Admission Info
+                </h6>
+                <div class="row g-3">
+                  <div class="col-12">
+                    <label class="text-muted small text-uppercase fw-bold d-block">Applied Academic Program</label>
+                    <div id="modalCourse" class="text-white fw-bold fs-6"></div>
+                  </div>
+                  <div class="col-sm-6">
+                    <label class="text-muted small text-uppercase fw-bold d-block">Email Address</label>
+                    <div id="modalEmail" class="text-white fw-semibold font-monospace" style="font-size: 0.88rem;"></div>
+                  </div>
+                  <div class="col-sm-6">
+                    <label class="text-muted small text-uppercase fw-bold d-block">Mobile Number</label>
+                    <div id="modalPhone" class="text-white fw-semibold font-monospace" style="font-size: 0.88rem;"></div>
+                  </div>
+                  <div class="col-sm-6">
+                    <label class="text-muted small text-uppercase fw-bold d-block">Highest Qualification</label>
+                    <div id="modalQual" class="text-white fw-semibold"></div>
+                  </div>
+                  <div class="col-sm-6">
+                    <label class="text-muted small text-uppercase fw-bold d-block">Aadhaar Number</label>
+                    <div id="modalAadhaar" class="text-white font-monospace fw-bold"></div>
+                  </div>
+                  <div class="col-sm-6">
+                    <label class="text-muted small text-uppercase fw-bold d-block">Registration Fee Paid</label>
+                    <div id="modalFee" class="text-success fw-bold fs-6 font-monospace"></div>
+                  </div>
+                  <div class="col-sm-6">
+                    <label class="text-muted small text-uppercase fw-bold d-block">Razorpay Tx ID</label>
+                    <div id="modalTxId" class="text-info font-monospace" style="font-size: 0.82rem;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- RIGHT COLUMN: PROPER DOCUMENT PREVIEWS -->
+            <div class="col-lg-7">
+              <div class="d-flex align-items-center justify-content-between mb-3">
+                <h5 class="text-white fw-bold mb-0" style="font-family: var(--font-heading);">
+                  <i class="fas fa-file-shield text-warning me-2"></i> Verification Documents Preview
+                </h5>
+                <span class="badge bg-dark border border-secondary text-muted">Stored in Student Folder</span>
+              </div>
+
+              <div class="row g-3">
+                
+                <!-- 1. PASSPORT PHOTO PREVIEW CARD -->
+                <div class="col-md-6">
+                  <div class="doc-preview-card">
+                    <div>
+                      <div class="d-flex justify-content-between align-items-center mb-2">
+                        <strong class="text-white" style="font-size: 0.9rem;"><i class="fas fa-camera text-primary me-1"></i> Passport Photo</strong>
+                        <span id="badgePhoto" class="doc-badge-pill bg-primary text-white">Available</span>
+                      </div>
+                      <div class="doc-preview-thumb-box" id="boxPhotoPreview">
+                        <img id="imgDocPhoto" src="" alt="Passport Photo" onclick="window.open(this.src, '_blank')">
+                      </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                      <a id="btnPhotoOpen" href="#" target="_blank" class="btn btn-sm btn-outline-primary flex-grow-1">
+                        <i class="fas fa-expand me-1"></i> Open Full Photo
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 2. AADHAAR CARD PREVIEW CARD -->
+                <div class="col-md-6">
+                  <div class="doc-preview-card">
+                    <div>
+                      <div class="d-flex justify-content-between align-items-center mb-2">
+                        <strong class="text-white" style="font-size: 0.9rem;"><i class="fas fa-id-card text-warning me-1"></i> Aadhaar Card</strong>
+                        <span id="badgeAadhaar" class="doc-badge-pill bg-warning text-dark">Available</span>
+                      </div>
+                      <div class="doc-preview-thumb-box" id="boxAadhaarPreview">
+                        <img id="imgDocAadhaar" src="" alt="Aadhaar Card" onclick="window.open(this.src, '_blank')">
+                        <div id="pdfDocAadhaar" class="pdf-placeholder" style="display: none;">
+                          <i class="fas fa-file-pdf fa-3x mb-2"></i>
+                          <div class="small fw-bold">PDF Document</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                      <a id="btnAadhaarOpen" href="#" target="_blank" class="btn btn-sm btn-outline-warning flex-grow-1">
+                        <i class="fas fa-external-link-alt me-1"></i> Open Aadhaar Card
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 3. MARKSHEET PREVIEW CARD -->
+                <div class="col-12">
+                  <div class="doc-preview-card">
+                    <div>
+                      <div class="d-flex justify-content-between align-items-center mb-2">
+                        <strong class="text-white" style="font-size: 0.9rem;"><i class="fas fa-file-alt text-success me-1"></i> Academic Marksheet / Certificate</strong>
+                        <span id="badgeMarksheet" class="doc-badge-pill bg-success text-white">Available</span>
+                      </div>
+                      <div class="doc-preview-thumb-box" id="boxMarksheetPreview" style="height: 220px;">
+                        <img id="imgDocMarksheet" src="" alt="Marksheet Document" onclick="window.open(this.src, '_blank')">
+                        <div id="pdfDocMarksheet" class="pdf-placeholder" style="display: none;">
+                          <i class="fas fa-file-pdf fa-3x mb-2"></i>
+                          <div class="small fw-bold">PDF Document</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                      <a id="btnMarksheetOpen" href="#" target="_blank" class="btn btn-sm btn-outline-success flex-grow-1">
+                        <i class="fas fa-external-link-alt me-1"></i> Open Academic Marksheet
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="modal-footer" style="background: #070e24; border-top: 1px solid #1e2c52;">
+          <a id="modalReceiptLink" href="#" target="_blank" class="btn btn-warning fw-bold px-3">
+            <i class="fas fa-file-invoice me-1"></i> Print Official Admission Slip
           </a>
-          <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-outline-light px-4" data-bs-dismiss="modal">Close</button>
         </div>
       </div>
     </div>
@@ -488,8 +617,8 @@ $coursesList = $pdo->query("SELECT title FROM courses ORDER BY title ASC")->fetc
   <script>
     function openDossierModal(data) {
       document.getElementById('modalName').innerText = data.full_name;
-      document.getElementById('modalAppId').innerText = data.application_id;
-      document.getElementById('modalStuId').innerText = data.student_id ? ('Student ID: ' + data.student_id) : 'Student ID: Pending';
+      document.getElementById('modalAppId').innerText = 'App: ' + data.application_id;
+      document.getElementById('modalStuId').innerText = data.student_id ? ('Student: ' + data.student_id) : 'Student: Pending';
       document.getElementById('modalEmail').innerText = data.email;
       document.getElementById('modalPhone').innerText = data.phone;
       document.getElementById('modalCourse').innerText = data.course_name;
@@ -497,31 +626,94 @@ $coursesList = $pdo->query("SELECT title FROM courses ORDER BY title ASC")->fetc
       document.getElementById('modalAadhaar').innerText = data.aadhaar_number || 'N/A';
       document.getElementById('modalFee').innerText = '₹' + parseFloat(data.fee_amount).toLocaleString('en-IN') + ' (Paid)';
       document.getElementById('modalTxId').innerText = data.razorpay_payment_id || 'RZP_VERIFIED';
-      document.getElementById('modalStatusBadge').innerHTML = '<span class="badge bg-success">' + data.admission_status.toUpperCase() + '</span>';
 
-      // Photo
+      let statusColor = 'bg-success';
+      if (data.admission_status === 'under_review') statusColor = 'bg-warning text-dark';
+      if (data.admission_status === 'rejected') statusColor = 'bg-danger';
+      document.getElementById('modalStatusBadge').innerHTML = '<span class="badge ' + statusColor + ' fs-6 px-3 py-2">' + data.admission_status.toUpperCase() + '</span>';
+
+      // 1. Passport Photo
       const photoImg = document.getElementById('modalPhoto');
+      const imgDocPhoto = document.getElementById('imgDocPhoto');
+      const btnPhotoOpen = document.getElementById('btnPhotoOpen');
+      const badgePhoto = document.getElementById('badgePhoto');
+
       if (data.photo_doc) {
         photoImg.src = '../' + data.photo_doc;
         photoImg.style.display = 'block';
+        imgDocPhoto.src = '../' + data.photo_doc;
+        imgDocPhoto.style.display = 'block';
+        btnPhotoOpen.href = '../' + data.photo_doc;
+        btnPhotoOpen.classList.remove('disabled');
+        badgePhoto.className = 'doc-badge-pill bg-success text-white';
+        badgePhoto.innerText = 'Uploaded';
       } else {
         photoImg.style.display = 'none';
+        imgDocPhoto.style.display = 'none';
+        btnPhotoOpen.href = '#';
+        btnPhotoOpen.classList.add('disabled');
+        badgePhoto.className = 'doc-badge-pill bg-secondary text-white';
+        badgePhoto.innerText = 'Not Uploaded';
       }
 
-      // Document buttons
-      const docBox = document.getElementById('modalDocButtons');
-      docBox.innerHTML = '';
-      if (data.photo_doc) {
-        docBox.innerHTML += `<a href="../${data.photo_doc}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-camera me-1"></i> Student Photo</a>`;
-      }
+      // 2. Aadhaar Card
+      const imgDocAadhaar = document.getElementById('imgDocAadhaar');
+      const pdfDocAadhaar = document.getElementById('pdfDocAadhaar');
+      const btnAadhaarOpen = document.getElementById('btnAadhaarOpen');
+      const badgeAadhaar = document.getElementById('badgeAadhaar');
+
       if (data.aadhaar_doc) {
-        docBox.innerHTML += `<a href="../${data.aadhaar_doc}" target="_blank" class="btn btn-sm btn-outline-warning"><i class="fas fa-id-card me-1"></i> Aadhaar Card</a>`;
+        const isPdf = data.aadhaar_doc.toLowerCase().endsWith('.pdf');
+        btnAadhaarOpen.href = '../' + data.aadhaar_doc;
+        btnAadhaarOpen.classList.remove('disabled');
+        badgeAadhaar.className = 'doc-badge-pill bg-success text-white';
+        badgeAadhaar.innerText = 'Uploaded';
+
+        if (isPdf) {
+          imgDocAadhaar.style.display = 'none';
+          pdfDocAadhaar.style.display = 'block';
+        } else {
+          imgDocAadhaar.src = '../' + data.aadhaar_doc;
+          imgDocAadhaar.style.display = 'block';
+          pdfDocAadhaar.style.display = 'none';
+        }
+      } else {
+        imgDocAadhaar.style.display = 'none';
+        pdfDocAadhaar.style.display = 'none';
+        btnAadhaarOpen.href = '#';
+        btnAadhaarOpen.classList.add('disabled');
+        badgeAadhaar.className = 'doc-badge-pill bg-secondary text-white';
+        badgeAadhaar.innerText = 'Not Uploaded';
       }
+
+      // 3. Marksheet
+      const imgDocMarksheet = document.getElementById('imgDocMarksheet');
+      const pdfDocMarksheet = document.getElementById('pdfDocMarksheet');
+      const btnMarksheetOpen = document.getElementById('btnMarksheetOpen');
+      const badgeMarksheet = document.getElementById('badgeMarksheet');
+
       if (data.marksheet_doc) {
-        docBox.innerHTML += `<a href="../${data.marksheet_doc}" target="_blank" class="btn btn-sm btn-outline-success"><i class="fas fa-file-alt me-1"></i> Academic Marksheet</a>`;
-      }
-      if (!data.photo_doc && !data.aadhaar_doc && !data.marksheet_doc) {
-        docBox.innerHTML = '<span class="text-muted small">No digital documents attached.</span>';
+        const isPdf = data.marksheet_doc.toLowerCase().endsWith('.pdf');
+        btnMarksheetOpen.href = '../' + data.marksheet_doc;
+        btnMarksheetOpen.classList.remove('disabled');
+        badgeMarksheet.className = 'doc-badge-pill bg-success text-white';
+        badgeMarksheet.innerText = 'Uploaded';
+
+        if (isPdf) {
+          imgDocMarksheet.style.display = 'none';
+          pdfDocMarksheet.style.display = 'block';
+        } else {
+          imgDocMarksheet.src = '../' + data.marksheet_doc;
+          imgDocMarksheet.style.display = 'block';
+          pdfDocMarksheet.style.display = 'none';
+        }
+      } else {
+        imgDocMarksheet.style.display = 'none';
+        pdfDocMarksheet.style.display = 'none';
+        btnMarksheetOpen.href = '#';
+        btnMarksheetOpen.classList.add('disabled');
+        badgeMarksheet.className = 'doc-badge-pill bg-secondary text-white';
+        badgeMarksheet.innerText = 'Not Uploaded';
       }
 
       // Receipt Link
