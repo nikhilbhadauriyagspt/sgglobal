@@ -72,19 +72,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // Process Curriculum Modules
+    // Process Curriculum Modules (Dynamic Multi-Modules)
     $curriculum = [];
-    if (!empty($_POST['module_title'])) {
+    if (!empty($_POST['module_title']) && is_array($_POST['module_title'])) {
+        $modNum = 1;
         foreach ($_POST['module_title'] as $idx => $mTitle) {
-            if (!empty(trim($mTitle))) {
+            $trimmedTitle = trim($mTitle);
+            if (!empty($trimmedTitle)) {
                 $topicsRaw = $_POST['module_topics'][$idx] ?? '';
                 $topics = array_filter(array_map('trim', explode("\n", str_replace("\r", "", $topicsRaw))));
                 $curriculum[] = [
-                    'num'      => sprintf("%02d", $idx + 1),
-                    'title'    => trim($mTitle),
+                    'num'      => sprintf("%02d", $modNum),
+                    'title'    => $trimmedTitle,
                     'duration' => trim($_POST['module_duration'][$idx] ?? '4 Weeks'),
                     'topics'   => array_values($topics)
                 ];
+                $modNum++;
             }
         }
     }
@@ -406,8 +409,14 @@ $categories = $pdo->query("SELECT id, name FROM course_categories WHERE status =
 
           <!-- SECTION 5: CURRICULUM ROADMAP MODULES -->
           <div class="bento-card">
-            <div class="bento-header">
-              <h2 class="bento-title"><i class="fas fa-route text-warning me-2"></i> 5. Curriculum Roadmap Modules</h2>
+            <div class="bento-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <div>
+                <h2 class="bento-title mb-0"><i class="fas fa-route text-warning me-2"></i> 5. Curriculum Roadmap Modules</h2>
+                <div class="text-muted" style="font-size: 0.78rem;">Add, customize, or delete as many learning roadmap modules as needed.</div>
+              </div>
+              <button type="button" class="btn btn-warning btn-sm fw-bold px-3 py-2" onclick="addCurriculumModule()">
+                <i class="fas fa-plus-circle me-1"></i> Add Module
+              </button>
             </div>
 
             <div id="curriculumContainer">
@@ -420,23 +429,34 @@ $categories = $pdo->query("SELECT id, name FROM course_categories WHERE status =
               ];
               foreach ($defaultModules as $i => $mod):
               ?>
-                <div class="dynamic-subcard">
+                <div class="dynamic-subcard curriculum-module-card mb-3 p-3" style="background: #070e24; border: 1px solid #1e2c52; border-radius: 10px;">
+                  <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom border-secondary">
+                    <span class="badge bg-warning text-dark font-monospace fw-bold px-2 py-1 module-badge-num">Module <?= sprintf("%02d", $i + 1) ?></span>
+                    <button type="button" class="btn btn-outline-danger btn-sm py-1 px-2" onclick="removeCurriculumModule(this)" title="Delete this module">
+                      <i class="fas fa-trash-alt me-1"></i> Delete Module
+                    </button>
+                  </div>
                   <div class="row g-2">
                     <div class="col-md-8">
-                      <label class="form-label">Module <?= $i + 1 ?> Title</label>
-                      <input type="text" class="form-control fw-bold" name="module_title[]" value="<?= htmlspecialchars($mod['title']) ?>">
+                      <label class="form-label" style="font-size: 0.8rem; text-transform: uppercase; font-weight: 700; color: #cbd5e1;">Module Title</label>
+                      <input type="text" class="form-control form-control-sm text-white fw-bold" style="background: #04091a; border-color: #2a3c6d;" name="module_title[]" value="<?= htmlspecialchars($mod['title']) ?>" placeholder="e.g. System Architecture & Development" required>
                     </div>
                     <div class="col-md-4">
-                      <label class="form-label">Module Duration</label>
-                      <input type="text" class="form-control" name="module_duration[]" value="<?= htmlspecialchars($mod['dur']) ?>">
+                      <label class="form-label" style="font-size: 0.8rem; text-transform: uppercase; font-weight: 700; color: #cbd5e1;">Module Duration</label>
+                      <input type="text" class="form-control form-control-sm text-white" style="background: #04091a; border-color: #2a3c6d;" name="module_duration[]" value="<?= htmlspecialchars($mod['dur']) ?>" placeholder="e.g. 4 Weeks">
                     </div>
                     <div class="col-12 mt-2">
-                      <label class="form-label">Topics Covered (One per line)</label>
-                      <textarea class="form-control" name="module_topics[]" rows="3"><?= htmlspecialchars($mod['topics']) ?></textarea>
+                      <label class="form-label" style="font-size: 0.8rem; text-transform: uppercase; font-weight: 700; color: #cbd5e1;">Topics Covered (One per line)</label>
+                      <textarea class="form-control form-control-sm text-white" style="background: #04091a; border-color: #2a3c6d;" name="module_topics[]" rows="3" placeholder="Topic 1&#10;Topic 2&#10;Topic 3"><?= htmlspecialchars($mod['topics']) ?></textarea>
                     </div>
                   </div>
                 </div>
               <?php endforeach; ?>
+            </div>
+
+            <div id="emptyCurriculumNotice" class="text-center py-4 text-muted" style="display: none;">
+              <i class="fas fa-route fa-2x mb-2 text-secondary"></i>
+              <div>No curriculum modules added yet. Click <strong>"+ Add Module"</strong> above to add your first module.</div>
             </div>
           </div>
 
@@ -502,6 +522,72 @@ $categories = $pdo->query("SELECT id, name FROM course_categories WHERE status =
         .replace(/[\s_-]+/g, '-')
         .replace(/^-+|-+$/g, '');
       document.getElementById('courseSlug').value = slug;
+    }
+
+    // Dynamic Curriculum Modules Add & Delete
+    function updateModuleNumbers() {
+      const container = document.getElementById('curriculumContainer');
+      const cards = container.querySelectorAll('.curriculum-module-card');
+      const emptyNotice = document.getElementById('emptyCurriculumNotice');
+      
+      if (emptyNotice) {
+        emptyNotice.style.display = (cards.length === 0) ? 'block' : 'none';
+      }
+
+      cards.forEach((card, index) => {
+        const num = String(index + 1).padStart(2, '0');
+        const badge = card.querySelector('.module-badge-num');
+        if (badge) badge.innerText = 'Module ' + num;
+      });
+    }
+
+    function addCurriculumModule(title = '', duration = '4 Weeks', topics = '') {
+      const container = document.getElementById('curriculumContainer');
+      const card = document.createElement('div');
+      card.className = 'dynamic-subcard curriculum-module-card mb-3 p-3';
+      card.style.background = '#070e24';
+      card.style.border = '1px solid #1e2c52';
+      card.style.borderRadius = '10px';
+      
+      card.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom border-secondary">
+          <span class="badge bg-warning text-dark font-monospace fw-bold px-2 py-1 module-badge-num">Module</span>
+          <button type="button" class="btn btn-outline-danger btn-sm py-1 px-2" onclick="removeCurriculumModule(this)" title="Delete this module">
+            <i class="fas fa-trash-alt me-1"></i> Delete Module
+          </button>
+        </div>
+        <div class="row g-2">
+          <div class="col-md-8">
+            <label class="form-label" style="font-size: 0.8rem; text-transform: uppercase; font-weight: 700; color: #cbd5e1;">Module Title</label>
+            <input type="text" class="form-control form-control-sm text-white fw-bold" style="background: #04091a; border-color: #2a3c6d;" name="module_title[]" value="${title}" placeholder="e.g. Advanced System Architecture" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" style="font-size: 0.8rem; text-transform: uppercase; font-weight: 700; color: #cbd5e1;">Module Duration</label>
+            <input type="text" class="form-control form-control-sm text-white" style="background: #04091a; border-color: #2a3c6d;" name="module_duration[]" value="${duration}" placeholder="e.g. 4 Weeks">
+          </div>
+          <div class="col-12 mt-2">
+            <label class="form-label" style="font-size: 0.8rem; text-transform: uppercase; font-weight: 700; color: #cbd5e1;">Topics Covered (One per line)</label>
+            <textarea class="form-control form-control-sm text-white" style="background: #04091a; border-color: #2a3c6d;" name="module_topics[]" rows="3" placeholder="Topic 1&#10;Topic 2&#10;Topic 3">${topics}</textarea>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+      updateModuleNumbers();
+
+      const titleInput = card.querySelector('input[name="module_title[]"]');
+      if (titleInput) {
+        titleInput.focus();
+      }
+    }
+
+    function removeCurriculumModule(btn) {
+      if (confirm('Are you sure you want to delete this curriculum module?')) {
+        const card = btn.closest('.curriculum-module-card');
+        if (card) {
+          card.remove();
+          updateModuleNumbers();
+        }
+      }
     }
   </script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

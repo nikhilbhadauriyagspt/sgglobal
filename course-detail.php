@@ -969,28 +969,40 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); } endforeach; ?>
 
         <div class="col-lg-8">
           <div class="timeline-wrap">
-            <?php
-if (session_status() === PHP_SESSION_NONE) { session_start(); } foreach ($c['curriculum'] as $module): ?>
-              <div class="timeline-item">
-                <div class="timeline-num"><?= htmlspecialchars($module['num']) ?></div>
-                <div class="timeline-card">
-                  <div class="timeline-header">
-                    <h4><?= htmlspecialchars($module['title']) ?></h4>
-                    <span class="timeline-duration"><?= htmlspecialchars($module['duration']) ?></span>
-                  </div>
-                  <div class="topic-pills">
-                    <?php
-if (session_status() === PHP_SESSION_NONE) { session_start(); } foreach ($module['topics'] as $topic): ?>
-                      <span class="topic-pill">
-                        <i class="fas fa-circle-check text-warning me-1"></i> <?= htmlspecialchars($topic) ?>
-                      </span>
-                    <?php
-if (session_status() === PHP_SESSION_NONE) { session_start(); } endforeach; ?>
+            <?php if (!empty($c['curriculum']) && is_array($c['curriculum'])): ?>
+              <?php foreach ($c['curriculum'] as $module): 
+                $topicsList = is_array($module['topics'] ?? null) ? $module['topics'] : (empty($module['topics']) ? [] : explode("
+", $module['topics']));
+              ?>
+                <div class="timeline-item">
+                  <div class="timeline-num"><?= htmlspecialchars($module['num'] ?? '01') ?></div>
+                  <div class="timeline-card">
+                    <div class="timeline-header">
+                      <h4><?= htmlspecialchars($module['title'] ?? '') ?></h4>
+                      <span class="timeline-duration"><?= htmlspecialchars($module['duration'] ?? '') ?></span>
+                    </div>
+                    <?php if (!empty($topicsList)): ?>
+                      <div class="topic-pills">
+                        <?php foreach ($topicsList as $topic): 
+                          $cleanTopic = trim($topic);
+                          if ($cleanTopic === '') continue;
+                        ?>
+                          <span class="topic-pill">
+                            <i class="fas fa-circle-check text-warning me-1"></i> <?= htmlspecialchars($cleanTopic) ?>
+                          </span>
+                        <?php endforeach; ?>
+                      </div>
+                    <?php endif; ?>
                   </div>
                 </div>
+              <?php endforeach; ?>
+            <?php else: ?>
+              <div class="p-4 rounded-3 text-center" style="background: var(--brand-dark-card); border: 1px solid var(--brand-border);">
+                <i class="fas fa-route fa-2x text-warning mb-2 d-block"></i>
+                <h5 class="text-white">Curriculum Roadmap In Development</h5>
+                <p class="text-muted mb-0">Detailed module roadmap for this academic program will be updated shortly.</p>
               </div>
-            <?php
-if (session_status() === PHP_SESSION_NONE) { session_start(); } endforeach; ?>
+            <?php endif; ?>
           </div>
         </div>
       </div>

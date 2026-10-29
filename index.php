@@ -2,6 +2,21 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+require_once __DIR__ . '/includes/db.php';
+
+// Fetch active categories
+$catStmt = $pdo->query("SELECT * FROM course_categories WHERE status = 'active' ORDER BY id ASC");
+$categories = $catStmt->fetchAll();
+
+// Fetch active courses
+$courseStmt = $pdo->query("
+    SELECT c.*, cat.name AS category_name, cat.slug AS cat_slug 
+    FROM courses c 
+    LEFT JOIN course_categories cat ON c.category_id = cat.id 
+    WHERE c.status = 'active' 
+    ORDER BY c.id ASC
+");
+$allCourses = $courseStmt->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -159,332 +174,122 @@ if (session_status() === PHP_SESSION_NONE) {
     <h2 class="text-center mb-4">Explore Our Diverse Range of Courses</h2>
     <p class="text-center mb-5">Discover courses tailored to your career goals, from Business & Management to cutting-edge Technology & IT, designed to empower you with in-demand skills.</p>
 
-    <!-- Tabs Navigation -->
+    <!-- Dynamic Tabs Navigation with 'All' Tab First -->
     <ul class="nav nav-tabs justify-content-center mb-4" id="coursesTab" role="tablist">
+      <!-- 1. All Courses Tab (Default Active) -->
       <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="business Tab" data-bs-toggle="tab" data-bs-target="#business" type="button" role="tab" aria-controls="business" aria-selected="true">Business & Management</button>
+        <button class="nav-link active" 
+                id="all-courses-tab" 
+                data-bs-toggle="tab" 
+                data-bs-target="#all-courses" 
+                type="button" 
+                role="tab" 
+                aria-controls="all-courses" 
+                aria-selected="true">
+          All
+        </button>
       </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="specialized-tab" data-bs-toggle="tab" data-bs-target="#specialized" type="button" role="tab" aria-controls="specialized" aria-selected="false">Specialized Fields</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="tech-tab" data-bs-toggle="tab" data-bs-target="#tech" type="button" role="tab" aria-controls="tech" aria-selected="false">Technology & IT</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="design-tab" data-bs-toggle="tab" data-bs-target="#design" type="button" role="tab" aria-controls="design" aria-selected="false">Design & Creativity</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="marketing-tab" data-bs-toggle="tab" data-bs-target="#marketing" type="button" role="tab" aria-controls="marketing" aria-selected="false">Marketing</button>
-      </li>
+
+      <!-- 2. Dynamic Categories from Database -->
+      <?php foreach ($categories as $cat): 
+        $catTabId = preg_replace('/[^a-zA-Z0-9_-]/', '', $cat['slug'] ?: 'cat-' . $cat['id']);
+      ?>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" 
+                  id="<?= $catTabId ?>-tab" 
+                  data-bs-toggle="tab" 
+                  data-bs-target="#<?= $catTabId ?>" 
+                  type="button" 
+                  role="tab" 
+                  aria-controls="<?= $catTabId ?>" 
+                  aria-selected="false">
+            <?= htmlspecialchars($cat['name']) ?>
+          </button>
+        </li>
+      <?php endforeach; ?>
     </ul>
 
-    <!-- Tabs Content -->
+    <!-- Dynamic Tabs Content -->
     <div class="tab-content" id="coursesTabContent">
-      <!-- Business & Management -->
-      <div class="tab-pane fade show active" id="business" role="tabpanel" aria-labelledby="business-tab">
+      <!-- 1. All Courses Pane (Default Active) -->
+      <div class="tab-pane fade show active" 
+           id="all-courses" 
+           role="tabpanel" 
+           aria-labelledby="all-courses-tab">
         <div class="row g-4">
-          <div class="col-md-6 col-lg-3">
-            <div class="card h-100 course-card">
-              <div class="card-body">
-                <div class="card-img">
-                    <img src="assets/images/course/online.webp" width="100%" alt="">
+          <?php if (!empty($allCourses)): ?>
+            <?php foreach ($allCourses as $course): 
+              $courseImg = !empty($course['image']) ? $course['image'] : 'assets/images/course/online.webp';
+              $courseExcerpt = !empty($course['tagline']) ? $course['tagline'] : substr(strip_tags($course['overview'] ?? ''), 0, 105) . '...';
+            ?>
+              <div class="col-md-6 col-lg-3">
+                <div class="card h-100 course-card">
+                  <div class="card-body d-flex flex-column">
+                    <div class="card-img">
+                      <img src="<?= htmlspecialchars($courseImg) ?>" width="100%" alt="<?= htmlspecialchars($course['title']) ?>" style="height: 159px; object-fit: contain;">
+                    </div>
+                    <h5 class="card-title"><?= htmlspecialchars($course['title']) ?></h5>
+                    <p class="card-text flex-grow-1"><?= htmlspecialchars($courseExcerpt) ?></p>
+                    <div class="mt-auto">
+                      <a href="course-detail.php?course=<?= urlencode($course['slug']) ?>" class="btn course-btn">Learn More</a>
+                    </div>
+                  </div>
                 </div>
-                <h5 class="card-title">Business Studies</h5>
-                <p class="card-text">Learn the fundamentals of business operations, strategy, and entrepreneurship to thrive in dynamic markets.</p>
-                <a href="course-detail.php?course=business-studies" class="btn course-btn">Learn More</a>
               </div>
+            <?php endforeach; ?>
+          <?php else: ?>
+            <div class="col-12 text-center py-5 text-muted">
+              No courses available at the moment.
             </div>
-          </div>
-          <div class="col-md-6 col-lg-3">
-            <div class="card h-100 course-card">
-              <div class="card-body">
-                  <div class="card-img">
-                    <img src="assets/images/course/management.webp" width="100%" alt="">
-                </div>
-                <h5 class="card-title">Management Studies</h5>
-                <p class="card-text">Develop leadership and organizational skills to manage teams and drive business success.</p>
-                <a href="course-detail.php?course=management-studies" class="btn course-btn">Learn More</a>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6 col-lg-3">
-            <div class="card h-100 course-card">
-              <div class="card-body">
-                  <div class="card-img">
-                    <img src="assets/images/course/finacial.png" width="100%" alt="">
-                </div>
-                <h5 class="card-title">Financial Markets and Product</h5>
-                <p class="card-text">Explore financial instruments, markets, and products to make informed investment decisions.</p>
-                <a href="course-detail.php?course=banking-and-finance" class="btn course-btn">Learn More</a>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6 col-lg-3">
-            <div class="card h-100 course-card">
-              <div class="card-body">
-                  <div class="card-img">
-                    <img src="assets/images/course/business-intelligence-png.png" width="100%" alt="">
-                </div>
-                <h5 class="card-title">Business Intelligence</h5>
-                <p class="card-text">Master data-driven decision-making with tools and techniques for business analytics.</p>
-                <a href="course-detail.php?course=business-intelligence" class="btn course-btn">Learn More</a>
-              </div>
-            </div>
-          </div>
+          <?php endif; ?>
         </div>
       </div>
 
-      <!-- Specialized Fields -->
-      <div class="tab-pane fade" id="specialized" role="tabpanel" aria-labelledby="specialized-tab">
-        <div class="row g-4">
-          <div class="col-md-6 col-lg-3">
-            <div class="card h-100 course-card">
-              <div class="card-body">
-                  <div class="card-img">
-                    <img src="assets/images/course/avation.webp" width="100%" alt="">
+      <!-- 2. Individual Category Panes -->
+      <?php foreach ($categories as $cat): 
+        $catTabId = preg_replace('/[^a-zA-Z0-9_-]/', '', $cat['slug'] ?: 'cat-' . $cat['id']);
+        // Filter courses for this category
+        $catCourses = array_filter($allCourses, function($c) use ($cat) {
+          return (int)$c['category_id'] === (int)$cat['id'];
+        });
+      ?>
+        <div class="tab-pane fade" 
+             id="<?= $catTabId ?>" 
+             role="tabpanel" 
+             aria-labelledby="<?= $catTabId ?>-tab">
+          <div class="row g-4">
+            <?php if (!empty($catCourses)): ?>
+              <?php foreach ($catCourses as $course): 
+                $courseImg = !empty($course['image']) ? $course['image'] : 'assets/images/course/online.webp';
+                $courseExcerpt = !empty($course['tagline']) ? $course['tagline'] : substr(strip_tags($course['overview'] ?? ''), 0, 105) . '...';
+              ?>
+                <div class="col-md-6 col-lg-3">
+                  <div class="card h-100 course-card">
+                    <div class="card-body d-flex flex-column">
+                      <div class="card-img">
+                        <img src="<?= htmlspecialchars($courseImg) ?>" width="100%" alt="<?= htmlspecialchars($course['title']) ?>" style="height: 159px; object-fit: contain;">
+                      </div>
+                      <h5 class="card-title"><?= htmlspecialchars($course['title']) ?></h5>
+                      <p class="card-text flex-grow-1"><?= htmlspecialchars($courseExcerpt) ?></p>
+                      <div class="mt-auto">
+                        <a href="course-detail.php?course=<?= urlencode($course['slug']) ?>" class="btn course-btn">Learn More</a>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <h5 class="card-title">Aviation</h5>
-                <p class="card-text">Gain insights into aviation operations, safety, and management for a high-flying career.</p>
-                <a href="course-detail.php?course=airport-management" class="btn course-btn">Learn More</a>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6 col-lg-3">
-            <div class="card h-100 course-card">
-              <div class="card-body">
-                  <div class="card-img">
-                    <img src="assets/images/course/toiuris.png" width="100%" alt="">
+              <?php endforeach; ?>
+            <?php else: ?>
+              <div class="col-12 text-center py-5">
+                <div class="p-4" style="background: #fff; border-radius: 10px; max-width: 480px; margin: 0 auto; box-shadow: none;">
+                  <h5 class="card-title mb-2"><?= htmlspecialchars($cat['name']) ?></h5>
+                  <p class="card-text mb-3">Courses in this specialization are currently being updated for the 2026 academic batch.</p>
+                  <a href="explore-course.php" class="btn course-btn btn-sm">Browse All Courses</a>
                 </div>
-                <h5 class="card-title">Tourism and Hospitality</h5>
-                <p class="card-text">Learn customer service and management skills for the global tourism industry.</p>
-                <a href="course-detail.php?course=tourism-and-hospitality" class="btn course-btn">Learn More</a>
               </div>
-            </div>
-          </div>
-          <div class="col-md-6 col-lg-3">
-            <div class="card h-100 course-card">
-              <div class="card-body">
-                  <div class="card-img">
-                    <img src="assets/images/course/jounss.webp" width="100%" alt="">
-                </div>
-                <h5 class="card-title">Journalism and Mass Communication</h5>
-                <p class="card-text">Develop storytelling and media skills for journalism and communication careers.</p>
-                <a href="course-detail.php?course=journalism-and-mass-communication" class="btn course-btn">Learn More</a>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6 col-lg-3">
-            <div class="card h-100 course-card">
-              <div class="card-body">
-                  <div class="card-img">
-                    <img src="assets/images/course/life-skills.png" width="100%" alt="">
-                </div>
-                <h5 class="card-title">Life Skills</h5>
-                <p class="card-text">Enhance essential skills for personal growth and professional success.</p>
-                <a href="explore-course.php" class="btn course-btn">Learn More</a>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6 col-lg-3">
-            <div class="card h-100 course-card">
-              <div class="card-body">
-                  <div class="card-img">
-                    <img src="assets/images/course/generalstudies.webp" width="100%" alt="">
-                </div>
-                <h5 class="card-title">General Studies</h5>
-                <p class="card-text">Build a broad knowledge base with interdisciplinary studies for versatile career paths.</p>
-                <a href="explore-course.php" class="btn course-btn">Learn More</a>
-              </div>
-            </div>
+            <?php endif; ?>
           </div>
         </div>
-      </div>
-
-      <!-- Technology & IT -->
-      <div class="tab-pane fade" id="tech" role="tabpanel" aria-labelledby="tech-tab">
-        <div class="row g-4">
-          <div class="col-md-6 col-lg-3">
-            <div class="card h-100 course-card">
-              <div class="card-body">
-                  <div class="card-img">
-                    <img src="assets/images/course/web-technology.webp" width="100%" alt="">
-                </div>
-                <h5 class="card-title">Web Technology</h5>
-                <p class="card-text">Master HTML, CSS, and JavaScript to build responsive and modern websites.</p>
-                <a href="course-detail.php?course=web-technology" class="btn course-btn">Learn More</a>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6 col-lg-3">
-            <div class="card h-100 course-card">
-              <div class="card-body">
-                  <div class="card-img">
-                    <img src="assets/images/course/python.webp" width="100%" alt="">
-                </div>
-                <h5 class="card-title">Python Data Structures</h5>
-                <p class="card-text">Learn Python programming and data structures for efficient coding and analysis.</p>
-                <a href="course-detail.php?course=python-data-structures" class="btn course-btn">Learn More</a>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6 col-lg-3">
-            <div class="card h-100 course-card">
-              <div class="card-body">
-                  <div class="card-img">
-                    <img src="assets/images/course/robotic.png" width="100%" alt="">
-                </div>
-                <h5 class="card-title">Introduction to Robotic Programming</h5>
-                <p class="card-text">Explore the basics of programming robots for automation and innovation.</p>
-                <a href="explore-course.php" class="btn course-btn">Learn More</a>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6 col-lg-3">
-            <div class="card h-100 course-card">
-              <div class="card-body">
-                  <div class="card-img">
-                    <img src="assets/images/course/Revolutionising-AI.png" width="100%" alt="">
-                </div>
-                <h5 class="card-title">AI in Human Resource Management</h5>
-                <p class="card-text">Leverage AI to streamline HR processes and enhance workforce management.</p>
-                <a href="explore-course.php" class="btn course-btn">Learn More</a>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6 col-lg-3">
-            <div class="card h-100 course-card">
-              <div class="card-body">
-                  <div class="card-img">
-                    <img src="assets/images/course/advance-digital.png" width="100%" alt="">
-                </div>
-                <h5 class="card-title">Advance Digital Transformation</h5>
-                <p class="card-text">Drive organizational change with advanced digital strategies and technologies.</p>
-                <a href="explore-course.php" class="btn course-btn">Learn More</a>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6 col-lg-3">
-            <div class="card h-100 course-card">
-              <div class="card-body">
-                  <div class="card-img">
-                    <img src="assets/images/course/datasnyalyst.png" width="100%" alt="">
-                </div>
-                <h5 class="card-title">Advance Data Analytics</h5>
-                <p class="card-text">Analyze complex datasets to uncover insights and inform decisions.</p>
-                <a href="course-detail.php?course=advance-data-analytics" class="btn course-btn">Learn More</a>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6 col-lg-3">
-            <div class="card h-100 course-card">
-              <div class="card-body">
-                  <div class="card-img">
-                    <img src="assets/images/course/artificial-intelligence.webp" width="100%" alt="">
-                </div>
-                <h5 class="card-title">IT Automation</h5>
-                <p class="card-text">Automate IT processes to improve efficiency and scalability.</p>
-                <a href="explore-course.php" class="btn course-btn">Learn More</a>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6 col-lg-3">
-            <div class="card h-100 course-card">
-              <div class="card-body">
-                  <div class="card-img">
-                    <img src="assets/images/course/Support-PNG-Transparent-Picture.png" width="100%" alt="">
-                </div>
-                <h5 class="card-title">IT Support</h5>
-                <p class="card-text">Develop skills to troubleshoot and support IT systems effectively.</p>
-                <a href="course-detail.php?course=it-support" class="btn course-btn">Learn More</a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Design & Creativity -->
-      <div class="tab-pane fade" id="design" role="tabpanel" aria-labelledby="design-tab">
-        <div class="row g-4">
-          <div class="col-md-6 col-lg-3">
-            <div class="card h-100 course-card">
-              <div class="card-body">
-                  <div class="card-img">
-                    <img src="assets/images/course/design.jpg" width="100%" alt="">
-                </div>
-                <h5 class="card-title">Design Study</h5>
-                <p class="card-text">Learn the principles of design to create visually impactful projects.</p>
-                <a href="explore-course.php" class="btn course-btn">Learn More</a>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6 col-lg-3">
-            <div class="card h-100 course-card">
-              <div class="card-body">
-                <div class="card-img">
-                    <img src="assets/images/course/th.jpeg" width="100%" alt="">
-                </div>
-                <h5 class="card-title">Cosmetology Studies</h5>
-                <p class="card-text">Master techniques in beauty and personal care for a creative career.</p>
-                <a href="explore-course.php" class="btn course-btn">Learn More</a>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6 col-lg-3">
-            <div class="card h-100 course-card">
-              <div class="card-body">
-                <div class="card-img">
-                    <img src="assets/images/course/3d.jpg" width="100%" alt="">
-                </div>
-                <h5 class="card-title">3D Painting and Design for Educators</h5>
-                <p class="card-text">Create 3D designs and paintings for educational applications.</p>
-                <a href="explore-course.php" class="btn course-btn">Learn More</a>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6 col-lg-3">
-            <div class="card h-100 course-card">
-              <div class="card-body">
-                <div class="card-img">
-                    <img src="assets/images/course/What-is-UI-UX-Design.jpg" width="100%" alt="">
-                </div>
-                <h5 class="card-title">UX Design</h5>
-                <p class="card-text">Design user-friendly interfaces with a focus on user experience.</p>
-                <a href="course-detail.php?course=ux-design" class="btn course-btn">Learn More</a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Marketing -->
-      <div class="tab-pane fade" id="marketing" role="tabpanel" aria-labelledby="marketing-tab">
-        <div class="row g-4">
-          <div class="col-md-6 col-lg-3">
-            <div class="card h-100 course-card">
-              <div class="card-body">
-                <div class="card-img">
-                    <img src="assets/images/course/digita.jpeg" width="100%" alt="">
-                </div>
-                <h5 class="card-title">Digital Marketing Strategy</h5>
-                <p class="card-text">Craft effective digital marketing campaigns to boost brand visibility.</p>
-                <a href="course-detail.php?course=digital-marketing-strategy" class="btn course-btn">Learn More</a>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6 col-lg-3">
-            <div class="card h-100 course-card">
-              <div class="card-body">
-                <div class="card-img">
-                    <img src="assets/images/course/Digital-Marketing.png" width="100%" alt="">
-                </div>
-                <h5 class="card-title">Digital Marketing & E-commerce</h5>
-                <p class="card-text">Learn strategies to succeed in online marketing and e-commerce platforms.</p>
-                <a href="course-detail.php?course=digital-marketing-ecommerce" class="btn course-btn">Learn More</a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <?php endforeach; ?>
     </div>
 
     <!-- Call to Action -->
