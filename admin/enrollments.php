@@ -544,6 +544,9 @@ $coursesList = $pdo->query("SELECT title, slug FROM courses ORDER BY title ASC")
                         'course_name' => $enr['course_name'],
                         'course_slug' => $enr['course_slug'],
                         'fee_amount' => number_format((float)$enr['fee_amount'], 2),
+                        'original_fee' => !empty($enr['original_course_fee']) ? number_format((float)$enr['original_course_fee'], 2) : number_format((float)$enr['fee_amount'] + (float)($enr['reg_fee_deducted'] ?? 0), 2),
+                        'reg_deducted' => !empty($enr['reg_fee_deducted']) ? number_format((float)$enr['reg_fee_deducted'], 2) : '0.00',
+                        'admission_id_linked' => $enr['admission_id_linked'] ?? '',
                         'payment_status' => $enr['payment_status'],
                         'payment_method' => $enr['payment_method'],
                         'razorpay_payment_id' => $enr['razorpay_payment_id'] ?: 'N/A',
@@ -624,6 +627,13 @@ $coursesList = $pdo->query("SELECT title, slug FROM courses ORDER BY title ASC")
                             ₹<?= number_format((float)$enr['fee_amount'], 2) ?>
                           </span>
                         </div>
+                        <?php if (!empty($enr['reg_fee_deducted']) && (float)$enr['reg_fee_deducted'] > 0): ?>
+                          <div class="mt-1">
+                            <span class="badge bg-success bg-opacity-25 text-success border border-success" style="font-size: 0.68rem;" title="Admission Fee Auto-Deducted">
+                              <i class="fas fa-check-circle me-1"></i> -₹<?= number_format((float)$enr['reg_fee_deducted'], 0) ?> (<?= htmlspecialchars($enr['admission_id_linked'] ?? '') ?>)
+                            </span>
+                          </div>
+                        <?php endif; ?>
                         <span class="badge bg-success text-white px-2 py-0 mt-1" style="font-size: 0.68rem; font-weight: 800;">
                           PAID
                         </span>
@@ -795,8 +805,17 @@ $coursesList = $pdo->query("SELECT title, slug FROM courses ORDER BY title ASC")
 
                   <div class="col-sm-6">
                     <div class="dossier-cell">
-                      <div class="dossier-label"><i class="fas fa-indian-rupee-sign"></i> Tuition Fee Amount</div>
+                      <div class="dossier-label"><i class="fas fa-indian-rupee-sign"></i> Net Tuition Paid</div>
                       <div id="modalFee" class="dossier-val text-success font-monospace fs-6"></div>
+                    </div>
+                  </div>
+                  <div class="col-12" id="modalDeductionRow" style="display: none;">
+                    <div class="dossier-cell" style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3);">
+                      <div class="dossier-label text-success"><i class="fas fa-ticket-alt me-1"></i> Admission Fee Deduction Applied</div>
+                      <div class="d-flex justify-content-between align-items-center mt-1 flex-wrap gap-2">
+                        <span class="text-white small">Original Fee: <strong id="modalOrigFee"></strong> &bull; Credited: <strong class="text-success" id="modalRegDeducted"></strong></span>
+                        <span class="badge bg-success font-monospace" id="modalLinkedAppId"></span>
+                      </div>
                     </div>
                   </div>
 
@@ -999,7 +1018,16 @@ $coursesList = $pdo->query("SELECT title, slug FROM courses ORDER BY title ASC")
 
       // Course & Ledger
       document.getElementById('modalCourseTitle').innerText = data.course_name + (data.course_slug ? ' (' + data.course_slug + ')' : '');
-      document.getElementById('modalFee').innerText = '₹' + data.fee_amount;
+            document.getElementById('modalFee').innerText = '₹' + data.fee_amount;
+      const dedRow = document.getElementById('modalDeductionRow');
+      if (data.reg_deducted && parseFloat(data.reg_deducted) > 0) {
+        dedRow.style.display = 'block';
+        document.getElementById('modalOrigFee').innerText = '₹' + data.original_fee;
+        document.getElementById('modalRegDeducted').innerText = '-₹' + data.reg_deducted;
+        document.getElementById('modalLinkedAppId').innerText = data.admission_id_linked || 'Admission Linked';
+      } else {
+        dedRow.style.display = 'none';
+      }
       document.getElementById('modalPaymentMethod').innerText = data.payment_method || 'Razorpay';
       document.getElementById('modalEnrolledAt').innerText = data.enrolled_at || 'N/A';
       document.getElementById('modalTxId').innerText = (data.razorpay_payment_id && data.razorpay_payment_id !== 'N/A') ? data.razorpay_payment_id : 'Direct Verified';

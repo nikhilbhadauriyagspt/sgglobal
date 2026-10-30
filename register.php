@@ -16,7 +16,8 @@ $razorpayStatus  = $sysSettings['razorpay_status'] ?? 'active';
 $smtpMode        = $sysSettings['smtp_mode'] ?? 'test';
 
 // Fetch active courses from database
-$dbCourses = $pdo->query("SELECT id, title, duration FROM courses WHERE status = 'active' ORDER BY title ASC")->fetchAll();
+$selectedCourseParam = trim($_GET["course"] ?? ($_GET["course_id"] ?? ""));
+$dbCourses = $pdo->query("SELECT id, title, slug, duration FROM courses WHERE status = 'active' ORDER BY title ASC")->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -701,8 +702,23 @@ $dbCourses = $pdo->query("SELECT id, title, duration FROM courses WHERE status =
                       <i class="fas fa-graduation-cap"></i>
                       <select class="form-select" id="course" required>
                         <?php if (!empty($dbCourses)): ?>
-                          <?php foreach ($dbCourses as $idx => $dc): ?>
-                            <option value="<?= htmlspecialchars($dc['title']) ?>" <?= ($idx === 0) ? 'selected' : '' ?>>
+                          <?php 
+                          $matchFound = false;
+                          foreach ($dbCourses as $dc) {
+                              if (!empty($selectedCourseParam) && (strtolower($selectedCourseParam) === strtolower($dc['slug'] ?? '') || (string)$selectedCourseParam === (string)$dc['id'] || strtolower($selectedCourseParam) === strtolower($dc['title']))) {
+                                  $matchFound = true;
+                                  break;
+                              }
+                          }
+                          foreach ($dbCourses as $idx => $dc): 
+                              $isSelected = false;
+                              if (!empty($selectedCourseParam) && (strtolower($selectedCourseParam) === strtolower($dc['slug'] ?? '') || (string)$selectedCourseParam === (string)$dc['id'] || strtolower($selectedCourseParam) === strtolower($dc['title']))) {
+                                  $isSelected = true;
+                              } elseif (!$matchFound && $idx === 0) {
+                                  $isSelected = true;
+                              }
+                          ?>
+                            <option value="<?= htmlspecialchars($dc['title']) ?>" <?= $isSelected ? 'selected' : '' ?>>
                               <?= htmlspecialchars($dc['title']) ?> (<?= htmlspecialchars($dc['duration']) ?>)
                             </option>
                           <?php endforeach; ?>

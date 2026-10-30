@@ -4,6 +4,8 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 require_once __DIR__ . '/includes/db.php';
+require_once __DIR__ . '/includes/settings_helper.php';
+$siteSettings = getGlobalSettings();
 
 $enrollmentId = trim($_GET['id'] ?? '');
 
@@ -47,6 +49,13 @@ $initials = strtoupper(substr($parts[0], 0, 1));
 if (count($parts) > 1) {
     $initials .= strtoupper(substr(end($parts), 0, 1));
 }
+
+// Dynamic Site Settings
+$brandLogo   = !empty($siteSettings['site_logo']) ? $siteSettings['site_logo'] : 'assets/images/logo/logopng.png';
+$brandTitle  = $siteSettings['site_title'] ?: 'Skill Grow Institution';
+$brandPhone  = $siteSettings['site_phone'] ?: '+91 9217431562';
+$brandEmail  = $siteSettings['site_email'] ?: 'info@skillgrowinstitution.in';
+$brandAddr   = $siteSettings['site_address'] ?: 'Metro Plaza Meerut, 250002, India';
 
 // Receipt Serial Number
 $receiptSerial = 'RCP-' . date('Y', strtotime($enr['enrolled_at'])) . '-' . substr(preg_replace('/[^0-9]/', '', $enr['enrollment_id']), -5);
@@ -422,23 +431,23 @@ $receiptSerial = 'RCP-' . date('Y', strtotime($enr['enrolled_at'])) . '-' . subs
   <div class="receipt-sheet">
     
     <!-- Watermark Seal -->
-    <img src="assets/images/logo/logopng.png" alt="Seal" class="watermark-seal">
+    <img src="<?= htmlspecialchars($brandLogo) ?>" alt="Seal" class="watermark-seal">
 
     <div class="sheet-content">
 
       <!-- 1. Header with High-Res Brand Logo & Receipt Metadata -->
       <div class="sheet-header">
         <div class="brand-group">
-          <img src="assets/images/logo/logopng.png" alt="Skill Grow Institution Logo" class="brand-logo-img">
+          <img src="<?= htmlspecialchars($brandLogo) ?>" alt="<?= htmlspecialchars($brandTitle) ?>" class="brand-logo-img">
           <div>
-            <h1 class="institution-name">Skill Grow Institution</h1>
+            <h1 class="institution-name"><?= htmlspecialchars($brandTitle) ?></h1>
             <div class="institution-tagline">Center for Advanced Professional Studies & Technology Training</div>
             <div class="institution-meta">
               <span><i class="fas fa-globe text-primary me-1"></i>fairrepairguide.com</span>
               <span>&bull;</span>
-              <span><i class="fas fa-shield-alt text-success me-1"></i>ISO 9001:2015 Certified</span>
+              <span><i class="fas fa-envelope text-primary me-1"></i><?= htmlspecialchars($brandEmail) ?></span>
               <span>&bull;</span>
-              <span><i class="fas fa-phone-alt text-warning me-1"></i>+91 (800) 900-3420</span>
+              <span><i class="fas fa-phone-alt text-warning me-1"></i><?= htmlspecialchars($brandPhone) ?></span>
             </div>
           </div>
         </div>
@@ -506,6 +515,14 @@ $receiptSerial = 'RCP-' . date('Y', strtotime($enr['enrolled_at'])) . '-' . subs
               <?= htmlspecialchars($enr['course_name']) ?>
             </div>
           </div>
+          <?php if (!empty($enr['admission_id_linked'])): ?>
+            <div>
+              <div class="info-cell-label">Linked Admission ID</div>
+              <div class="info-cell-val font-monospace" style="color: #10b981; font-weight: 700;">
+                <i class="fas fa-check-circle me-1"></i> <?= htmlspecialchars($enr['admission_id_linked']) ?> (Fee Credit Applied)
+              </div>
+            </div>
+          <?php endif; ?>
         </div>
       </div>
 
@@ -519,6 +536,10 @@ $receiptSerial = 'RCP-' . date('Y', strtotime($enr['enrolled_at'])) . '-' . subs
           </tr>
         </thead>
         <tbody>
+          <?php 
+          $origFee = !empty($enr['original_course_fee']) ? (float)$enr['original_course_fee'] : ((float)$enr['fee_amount'] + (float)($enr['reg_fee_deducted'] ?? 0));
+          $regDed  = (float)($enr['reg_fee_deducted'] ?? 0);
+          ?>
           <tr>
             <td>
               <strong><?= htmlspecialchars($enr['course_name']) ?></strong><br>
@@ -529,9 +550,21 @@ $receiptSerial = 'RCP-' . date('Y', strtotime($enr['enrolled_at'])) . '-' . subs
               <small class="text-muted"><?= htmlspecialchars($enr['mode'] ?: 'Interactive Live Labs') ?></small>
             </td>
             <td class="text-end font-monospace fw-bold">
-              ₹<?= number_format((float)$enr['fee_amount'], 2) ?>
+              ₹<?= number_format($origFee, 2) ?>
             </td>
           </tr>
+          <?php if ($regDed > 0): ?>
+            <tr style="background: rgba(16, 185, 129, 0.06);">
+              <td>
+                <strong class="text-success"><i class="fas fa-check-circle me-1"></i> Less: Admission Registration Credit (Auto-Deducted)</strong><br>
+                <small class="text-muted">Verified admission fee credited under Application ID: <strong><?= htmlspecialchars($enr['admission_id_linked']) ?></strong></small>
+              </td>
+              <td><span class="badge bg-success bg-opacity-25 text-success border border-success">Credited</span></td>
+              <td class="text-end font-monospace text-success fw-bold">
+                - ₹<?= number_format($regDed, 2) ?>
+              </td>
+            </tr>
+          <?php endif; ?>
           <tr>
             <td>
               <strong>E-Learning Portal Access & Project Code Repositories</strong>
@@ -551,8 +584,8 @@ $receiptSerial = 'RCP-' . date('Y', strtotime($enr['enrolled_at'])) . '-' . subs
             </td>
           </tr>
           <tr class="ledger-total-row">
-            <td colspan="2" class="text-end">Total Tuition Fee Paid in Full:</td>
-            <td class="text-end font-monospace" style="font-size: 1.05rem; color: #10b981;">
+            <td colspan="2" class="text-end">Total Net Tuition Paid in Full:</td>
+            <td class="text-end font-monospace" style="font-size: 1.15rem; color: #10b981;">
               ₹<?= number_format((float)$enr['fee_amount'], 2) ?>
             </td>
           </tr>

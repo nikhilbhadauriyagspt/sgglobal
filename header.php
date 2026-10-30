@@ -10,6 +10,8 @@ if (!isset($pdo)) {
         require_once $dbPath;
     }
 }
+require_once __DIR__ . '/includes/settings_helper.php';
+$hdrSettings = getGlobalSettings();
 
 $isStudentLoggedIn = !empty($_SESSION['student_logged_in']);
 $hdrStudentId      = $_SESSION['student_id'] ?? '';
@@ -499,15 +501,15 @@ $currentScript = basename($_SERVER['PHP_SELF']);
     <div class="row align-items-center">
       <div class="col-md-6 col-7">
         <div class="topbar-contact">
-          <a href="tel:+919217431562"><i class="fas fa-phone"></i> <span>+91 9217431562</span></a>
-          <a href="mailto:info@skillgrowinstitution.in" class="d-none d-sm-inline-flex"><i class="fas fa-envelope"></i> <span>info@skillgrowinstitution.in</span></a>
+          <a href="tel:<?= htmlspecialchars($hdrSettings['site_phone']) ?>"><i class="fas fa-phone"></i> <span><?= htmlspecialchars($hdrSettings['site_phone']) ?></span></a>
+          <a href="mailto:<?= htmlspecialchars($hdrSettings['site_email']) ?>" class="d-none d-sm-inline-flex"><i class="fas fa-envelope"></i> <span><?= htmlspecialchars($hdrSettings['site_email']) ?></span></a>
         </div>
       </div>
       <div class="col-md-6 col-5">
         <div class="topbar-right">
           <div class="topbar-chat d-none d-sm-block">
-            <a href="https://wa.me/919217431562" target="_blank">
-              <i class="fas fa-comment-dots"></i> Live Chat
+            <a href="https://wa.me/<?= preg_replace('/[^0-9]/', '', $hdrSettings['site_whatsapp']) ?>" target="_blank">
+              <i class="fab fa-whatsapp text-success"></i> WhatsApp Chat
             </a>
           </div>
           <div class="topbar-login">
@@ -529,7 +531,7 @@ $currentScript = basename($_SERVER['PHP_SELF']);
 <nav class="navbar navbar-expand-lg">
   <div class="container">
     <a class="navbar-brand" href="index.php">
-      <img src="assets/images/logo/logopng.png" alt="Skill Grow Institution Logo">
+      <img src="<?= htmlspecialchars($hdrSettings['site_logo']) ?>" alt="<?= htmlspecialchars($hdrSettings['site_title']) ?>" onerror="this.src='assets/images/logo/logopng.png'">
     </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
       aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">

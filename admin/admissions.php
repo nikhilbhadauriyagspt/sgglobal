@@ -98,6 +98,17 @@ $statAdm = [
     'total_fee'        => $pdo->query("SELECT SUM(fee_amount) FROM admissions WHERE payment_status = 'paid'")->fetchColumn() ?: 0,
 ];
 
+// Lookup linked course enrollments
+$linkedEnrollmentsMap = [];
+try {
+    $enrLookup = $pdo->query("SELECT enrollment_id, admission_id_linked, fee_amount, reg_fee_deducted, course_name FROM course_enrollments WHERE payment_status = 'paid' AND admission_id_linked IS NOT NULL")->fetchAll();
+    foreach ($enrLookup as $erow) {
+        if (!empty($erow['admission_id_linked'])) {
+            $linkedEnrollmentsMap[$erow['admission_id_linked']] = $erow;
+        }
+    }
+} catch (Exception $e) {}
+
 // Active courses list for filter
 $coursesList = $pdo->query("SELECT title FROM courses ORDER BY title ASC")->fetchAll();
 ?>
@@ -590,8 +601,20 @@ $coursesList = $pdo->query("SELECT title FROM courses ORDER BY title ASC")->fetc
                         <div class="fw-bold text-white mb-1" style="font-size: 0.88rem;">
                           <?= htmlspecialchars($adm['course_name']) ?>
                         </div>
-                        <div class="text-light-contrast">
-                          <i class="far fa-calendar-alt text-warning me-1"></i><?= date('d M, Y', strtotime($adm['created_at'])) ?>
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                          <span class="text-light-contrast">
+                            <i class="far fa-calendar-alt text-warning me-1"></i><?= date('d M, Y', strtotime($adm['created_at'])) ?>
+                          </span>
+                          <?php if (isset($linkedEnrollmentsMap[$adm['application_id']])): ?>
+                            <?php $lEnr = $linkedEnrollmentsMap[$adm['application_id']]; ?>
+                            <a href="enrollments.php?search=<?= urlencode($lEnr['enrollment_id']) ?>" class="badge bg-success bg-opacity-25 text-success border border-success text-decoration-none" style="font-size: 0.68rem;" title="View Course Enrollment">
+                              <i class="fas fa-graduation-cap me-1"></i> Enrolled: <?= htmlspecialchars($lEnr['enrollment_id']) ?>
+                            </a>
+                          <?php else: ?>
+                            <span class="badge bg-warning bg-opacity-25 text-warning border border-warning" style="font-size: 0.68rem;">
+                              <i class="fas fa-clock me-1"></i> Enrollment Pending
+                            </span>
+                          <?php endif; ?>
                         </div>
                       </td>
 

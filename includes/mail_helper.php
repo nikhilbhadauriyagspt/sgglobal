@@ -8,13 +8,10 @@ require_once __DIR__ . '/PHPMailer/Exception.php';
 require_once __DIR__ . '/PHPMailer/PHPMailer.php';
 require_once __DIR__ . '/PHPMailer/SMTP.php';
 
+require_once __DIR__ . '/settings_helper.php';
+
 function getSystemSettingsForMail($pdo) {
-    try {
-        $stmt = $pdo->query("SELECT * FROM system_settings WHERE id = 1 LIMIT 1");
-        return $stmt->fetch() ?: [];
-    } catch (Exception $e) {
-        return [];
-    }
+    return getGlobalSettings();
 }
 
 /**
@@ -134,16 +131,24 @@ HTML;
  * Send Admission & Payment Confirmation Email with details
  */
 function sendAdmissionSuccessEmail($pdo, $studentData) {
+    $settings = getSystemSettingsForMail($pdo);
+    $siteTitle   = htmlspecialchars($settings['site_title'] ?: 'Skill Grow Institution');
+    $sitePhone   = htmlspecialchars($settings['site_phone'] ?: '+91 9217431562');
+    $siteEmail   = htmlspecialchars($settings['site_email'] ?: 'info@skillgrowinstitution.in');
+    $siteAddress = htmlspecialchars($settings['site_address'] ?: 'Metro Plaza Meerut, 250002, India');
+    
     $toEmail = $studentData['email'];
     $toName  = $studentData['full_name'];
     $appId   = $studentData['application_id'];
     $stuId   = $studentData['student_id'];
     $course  = $studentData['course_name'];
-    $fee     = number_format($studentData['fee_amount'], 2);
+    $fee     = number_format((float)$studentData['fee_amount'], 2);
     $payId   = $studentData['razorpay_payment_id'] ?? 'RZP_VERIFIED';
     $year    = date('Y');
+    $receiptUrl = "http://localhost:8000/download-receipt.php?app_id=" . urlencode($appId);
+    $portalUrl  = "http://localhost:8000/my-enrollments.php";
 
-    $subject = "Admission Confirmed! Application ID: {$appId} - Skill Grow Institution";
+    $subject = "Admission Confirmed! Application ID: {$appId} - {$siteTitle}";
 
     $html = <<<HTML
 <!DOCTYPE html>
@@ -152,65 +157,73 @@ function sendAdmissionSuccessEmail($pdo, $studentData) {
   <meta charset="utf-8">
   <style>
     body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #070e24; color: #e2e8f0; margin: 0; padding: 20px; }
-    .email-container { max-width: 600px; margin: 0 auto; background: #0c1634; border: 1px solid #1a274e; border-radius: 16px; overflow: hidden; }
+    .email-container { max-width: 620px; margin: 0 auto; background: #0c1634; border: 1px solid #1a274e; border-radius: 16px; overflow: hidden; }
     .header { background: #002365; padding: 30px; text-align: center; border-bottom: 2px solid #e6a910; }
     .header h1 { color: #ffffff; margin: 0; font-size: 24px; font-weight: 700; }
     .header p { color: #e6a910; margin: 5px 0 0; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; }
     .content { padding: 35px 30px; }
     .success-alert { background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; border-radius: 10px; padding: 15px; text-align: center; color: #10b981; font-weight: 700; margin-bottom: 25px; }
+    .deduction-notice { background: rgba(230, 169, 16, 0.1); border-left: 4px solid #e6a910; border-radius: 6px; padding: 12px 16px; margin-bottom: 22px; font-size: 13px; color: #f8fafc; line-height: 1.5; }
     .detail-table { width: 100%; border-collapse: collapse; margin-bottom: 25px; }
     .detail-table td { padding: 12px; border-bottom: 1px solid #1a274e; font-size: 14px; }
     .detail-table td.label { color: #94a3b8; width: 40%; font-weight: 600; }
     .detail-table td.value { color: #ffffff; font-weight: 700; }
-    .footer { background: #060b1b; padding: 20px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #1a274e; }
+    .btn-action { display: inline-block; background: #e6a910; color: #070e24; text-decoration: none; font-weight: 800; font-size: 14px; padding: 12px 24px; border-radius: 8px; margin: 10px 5px 0 0; }
+    .btn-secondary { display: inline-block; background: #1e293b; color: #cbd5e1; text-decoration: none; font-weight: 700; font-size: 14px; padding: 12px 24px; border-radius: 8px; margin: 10px 5px 0 0; border: 1px solid #334155; }
+    .footer { background: #060b1b; padding: 22px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #1a274e; line-height: 1.6; }
   </style>
 </head>
 <body>
   <div class="email-container">
     <div class="header">
-      <h1>Skill Grow Institution</h1>
-      <p>Admission & Enrollment Confirmation</p>
+      <h1>{$siteTitle}</h1>
+      <p>Admission & Seat Booking Confirmation</p>
     </div>
     <div class="content">
       <div class="success-alert">
         🎉 Congratulations! Your admission registration has been successfully confirmed.
       </div>
+
+      <div class="deduction-notice">
+        <strong>💡 Fee Deduction Guaranteed:</strong> The registration fee of <strong>₹{$fee}</strong> paid under this application will automatically be deducted from your final tuition fee when you enroll into your full program.
+      </div>
       
       <p style="color: #cbd5e1; font-size: 14px; line-height: 1.6;">
         Dear <strong>{$toName}</strong>,<br>
-        Your registration fee of <strong>₹{$fee}</strong> has been received and verified. Your student records have been created in our academic database.
+        Your registration fee has been received and verified. Your candidate admission profile has been officially created in our academic database.
       </p>
 
       <table class="detail-table">
         <tr>
-          <td class="label">Student ID</td>
-          <td class="value" style="color: #e6a910;">{$stuId}</td>
+          <td class="label">Permanent Student ID</td>
+          <td class="value" style="color: #e6a910; font-family: monospace;">{$stuId}</td>
         </tr>
         <tr>
           <td class="label">Application No.</td>
-          <td class="value">{$appId}</td>
+          <td class="value" style="font-family: monospace;">{$appId}</td>
         </tr>
         <tr>
-          <td class="label">Course Program</td>
+          <td class="label">Academic Program</td>
           <td class="value">{$course}</td>
         </tr>
         <tr>
-          <td class="label">Payment ID</td>
-          <td class="value">{$payId}</td>
+          <td class="label">Razorpay Transaction ID</td>
+          <td class="value" style="font-family: monospace;">{$payId}</td>
         </tr>
         <tr>
-          <td class="label">Registration Fee</td>
-          <td class="value" style="color: #10b981;">₹{$fee} (Paid)</td>
+          <td class="label">Registration Fee Paid</td>
+          <td class="value" style="color: #10b981;">₹{$fee} (Verified)</td>
         </tr>
       </table>
 
-      <p style="color: #94a3b8; font-size: 13px; line-height: 1.6;">
-        You can log in to your student learning portal using your registered email address ({$toEmail}). Your academic counselor will contact you shortly with your batch orientation schedule.
-      </p>
+      <div style="text-align: center; margin: 25px 0 10px;">
+        <a href="{$receiptUrl}" class="btn-action" target="_blank">📄 Download Admission Slip (PDF)</a>
+        <a href="{$portalUrl}" class="btn-secondary" target="_blank">🎓 Student Dashboard</a>
+      </div>
     </div>
     <div class="footer">
-      &copy; {$year} Skill Grow Institution. Verified Student Credential.<br>
-      Admissions Helpline: info@skillgrowinstitution.in
+      &copy; {$year} {$siteTitle}. Verified Student Credential.<br>
+      {$siteAddress} &bull; Helpline: {$sitePhone} &bull; Email: {$siteEmail}
     </div>
   </div>
 </body>
@@ -220,22 +233,49 @@ HTML;
     return sendSgiEmail($pdo, $toEmail, $toName, $subject, $html);
 }
 
-
-/**
- * Send Course Enrollment & Tuition Fee Receipt Email
- */
 function sendCourseEnrollmentEmail($pdo, $enrollmentData) {
+    $settings = getSystemSettingsForMail($pdo);
+    $siteTitle   = htmlspecialchars($settings['site_title'] ?: 'Skill Grow Institution');
+    $sitePhone   = htmlspecialchars($settings['site_phone'] ?: '+91 9217431562');
+    $siteEmail   = htmlspecialchars($settings['site_email'] ?: 'info@skillgrowinstitution.in');
+    $siteAddress = htmlspecialchars($settings['site_address'] ?: 'Metro Plaza Meerut, 250002, India');
+
     $toEmail      = $enrollmentData['student_email'];
     $toName       = $enrollmentData['student_name'];
     $enrollmentId = $enrollmentData['enrollment_id'];
     $stuId        = $enrollmentData['student_id'] ?: 'STUDENT';
     $courseName   = $enrollmentData['course_name'];
-    $fee          = number_format($enrollmentData['fee_amount'], 2);
+    $netPaid      = (float)$enrollmentData['fee_amount'];
+    $origFee      = (float)($enrollmentData['original_fee'] ?? $netPaid);
+    $regDeducted  = (float)($enrollmentData['reg_deducted'] ?? 0);
+    $admissionId  = $enrollmentData['admission_id'] ?? '';
     $payId        = $enrollmentData['razorpay_payment_id'] ?? 'RZP_PAID';
     $year         = date('Y');
     $date         = date('d M, Y h:i A');
 
-    $subject = "Course Enrolled: {$courseName} (ID: {$enrollmentId}) - Skill Grow Institution";
+    $receiptUrl = "http://localhost:8000/enrollment-receipt.php?id=" . urlencode($enrollmentId);
+    $portalUrl  = "http://localhost:8000/my-enrollments.php";
+
+    $subject = "Course Enrolled: {$courseName} (ID: {$enrollmentId}) - {$siteTitle}";
+
+    $deductionRowsHtml = '';
+    if ($regDeducted > 0) {
+        $origFeeFmt = number_format($origFee, 2);
+        $regDedFmt  = number_format($regDeducted, 2);
+        $admLabel   = !empty($admissionId) ? " (Admission Slip: {$admissionId})" : "";
+        $deductionRowsHtml = <<<ROW
+        <tr>
+          <td class="label">Original Course Fee</td>
+          <td class="value">₹{$origFeeFmt}</td>
+        </tr>
+        <tr>
+          <td class="label">Less Registration Credit</td>
+          <td class="value" style="color: #10b981;">- ₹{$regDedFmt}{$admLabel} [Deducted]</td>
+        </tr>
+ROW;
+    }
+
+    $netPaidFmt = number_format($netPaid, 2);
 
     $html = <<<HTML
 <!DOCTYPE html>
@@ -244,7 +284,7 @@ function sendCourseEnrollmentEmail($pdo, $enrollmentData) {
   <meta charset="utf-8">
   <style>
     body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #070e24; color: #e2e8f0; margin: 0; padding: 20px; }
-    .email-container { max-width: 600px; margin: 0 auto; background: #0c1634; border: 1px solid #1a274e; border-radius: 16px; overflow: hidden; }
+    .email-container { max-width: 620px; margin: 0 auto; background: #0c1634; border: 1px solid #1a274e; border-radius: 16px; overflow: hidden; }
     .header { background: #002365; padding: 30px; text-align: center; border-bottom: 2px solid #e6a910; }
     .header h1 { color: #ffffff; margin: 0; font-size: 24px; font-weight: 700; }
     .header p { color: #e6a910; margin: 5px 0 0; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; }
@@ -252,16 +292,18 @@ function sendCourseEnrollmentEmail($pdo, $enrollmentData) {
     .success-alert { background: rgba(230, 169, 16, 0.15); border: 1px solid #e6a910; border-radius: 10px; padding: 15px; text-align: center; color: #e6a910; font-weight: 700; margin-bottom: 25px; }
     .detail-table { width: 100%; border-collapse: collapse; margin-bottom: 25px; }
     .detail-table td { padding: 12px; border-bottom: 1px solid #1a274e; font-size: 14px; }
-    .detail-table td.label { color: #94a3b8; width: 42%; font-weight: 600; }
+    .detail-table td.label { color: #94a3b8; width: 44%; font-weight: 600; }
     .detail-table td.value { color: #ffffff; font-weight: 700; }
-    .footer { background: #060b1b; padding: 20px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #1a274e; }
+    .btn-action { display: inline-block; background: #e6a910; color: #070e24; text-decoration: none; font-weight: 800; font-size: 14px; padding: 12px 24px; border-radius: 8px; margin: 10px 5px 0 0; }
+    .btn-secondary { display: inline-block; background: #1e293b; color: #cbd5e1; text-decoration: none; font-weight: 700; font-size: 14px; padding: 12px 24px; border-radius: 8px; margin: 10px 5px 0 0; border: 1px solid #334155; }
+    .footer { background: #060b1b; padding: 22px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #1a274e; line-height: 1.6; }
   </style>
 </head>
 <body>
   <div class="email-container">
     <div class="header">
-      <h1>Skill Grow Institution</h1>
-      <p>Course Enrollment & Fee Receipt</p>
+      <h1>{$siteTitle}</h1>
+      <p>Course Enrollment & Tuition Fee Receipt</p>
     </div>
     <div class="content">
       <div class="success-alert">
@@ -270,12 +312,12 @@ function sendCourseEnrollmentEmail($pdo, $enrollmentData) {
       
       <p style="color: #cbd5e1; font-size: 14px; line-height: 1.6;">
         Dear <strong>{$toName}</strong>,<br>
-        Your enrollment in <strong>{$courseName}</strong> has been successfully processed and confirmed. Your official Course Enrollment ID has been generated below.
+        Your official enrollment in <strong>{$courseName}</strong> has been successfully processed and verified. Your course credentials and receipt details are summarized below.
       </p>
 
       <table class="detail-table">
         <tr>
-          <td class="label">Course Enrollment ID</td>
+          <td class="label">Enrollment ID</td>
           <td class="value" style="color: #e6a910; font-size: 15px; font-family: monospace;">{$enrollmentId}</td>
         </tr>
         <tr>
@@ -284,14 +326,15 @@ function sendCourseEnrollmentEmail($pdo, $enrollmentData) {
         </tr>
         <tr>
           <td class="label">Student ID</td>
-          <td class="value">{$stuId}</td>
+          <td class="value" style="font-family: monospace;">{$stuId}</td>
+        </tr>
+        {$deductionRowsHtml}
+        <tr>
+          <td class="label">Net Tuition Paid</td>
+          <td class="value" style="color: #10b981; font-size: 16px;">₹{$netPaidFmt} (Paid in Full)</td>
         </tr>
         <tr>
-          <td class="label">Tuition Fee Paid</td>
-          <td class="value" style="color: #10b981;">₹{$fee} (Paid in Full)</td>
-        </tr>
-        <tr>
-          <td class="label">Razorpay Payment ID</td>
+          <td class="label">Razorpay Transaction ID</td>
           <td class="value" style="font-family: monospace;">{$payId}</td>
         </tr>
         <tr>
@@ -300,13 +343,14 @@ function sendCourseEnrollmentEmail($pdo, $enrollmentData) {
         </tr>
       </table>
 
-      <p style="color: #94a3b8; font-size: 13px; line-height: 1.6;">
-        You can review your enrolled courses, syllabus materials, and batch timings anytime in your student portal. If you have any questions, our admissions coordinator is here to support you.
-      </p>
+      <div style="text-align: center; margin: 25px 0 10px;">
+        <a href="{$receiptUrl}" class="btn-action" target="_blank">📄 Print / Save Tuition Receipt (PDF)</a>
+        <a href="{$portalUrl}" class="btn-secondary" target="_blank">🎓 Access Student Portal</a>
+      </div>
     </div>
     <div class="footer">
-      &copy; {$year} Skill Grow Institution. Verified Student Enrollment.<br>
-      Academic Support: info@skillgrowinstitution.in
+      &copy; {$year} {$siteTitle}. Verified Student Enrollment.<br>
+      {$siteAddress} &bull; Academic Helpline: {$sitePhone} &bull; Support: {$siteEmail}
     </div>
   </div>
 </body>

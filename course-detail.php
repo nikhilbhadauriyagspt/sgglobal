@@ -2,6 +2,12 @@
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
 // Dynamic Standout Modern Course Experience for SG Skill (100% Admin & Database Driven)
 require_once __DIR__ . '/admin/config/db.php';
+require_once __DIR__ . '/includes/settings_helper.php';
+$siteSettings = getGlobalSettings();
+$admissionFee = (float)($siteSettings['admission_fee'] ?? 999.00);
+$sysPhone = $siteSettings['site_phone'] ?: '+91 9217431562';
+$sysWhatsapp = $siteSettings['site_whatsapp'] ?: '919217431562';
+$sysWhatsappNum = preg_replace('/[^0-9]/', '', $sysWhatsapp);
 
 $slug = isset($_GET['course']) ? trim($_GET['course']) : 'web-technology';
 
@@ -789,12 +795,15 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); } include 'header.
             </div>
           </div>
 
-          <!-- Direct Actions (No Forms) -->
+          <!-- Direct Actions (Dual Options: Admission Registration or Direct Enrollment) -->
           <div class="neo-actions">
-            <a href="enrollnow.php?course=<?= urlencode($c['slug']) ?>" class="btn-neo-gold">
-              <i class="fas fa-user-graduate"></i> Apply for Admission
+            <a href="register.php?course=<?= urlencode($c['slug']) ?>" class="btn-neo-gold">
+              <i class="fas fa-id-card"></i> Book Seat / Register (₹<?= number_format($admissionFee, 0) ?>)
             </a>
-            <a href="https://wa.me/919217431562?text=Hello%20SG%20Skill,%20I%20want%20details%20about%20<?= urlencode($c['title']) ?>" target="_blank" class="btn-neo-glass">
+            <a href="enrollnow.php?course=<?= urlencode($c['slug']) ?>" class="btn-neo-glass text-warning border-warning">
+              <i class="fas fa-graduation-cap"></i> Enroll Full Program
+            </a>
+            <a href="https://wa.me/<?= htmlspecialchars($sysWhatsappNum) ?>?text=Hello%20SG%20Skill,%20I%20want%20details%20about%20<?= urlencode($c['title']) ?>" target="_blank" class="btn-neo-glass">
               <i class="fab fa-whatsapp text-success"></i> WhatsApp Counselor
             </a>
           </div>
@@ -959,9 +968,12 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); } endforeach; ?>
               </div>
             </div>
 
-            <div class="mt-4">
-              <a href="enrollnow.php?course=<?= urlencode($c['slug']) ?>" class="btn-neo-gold w-100 justify-content-center">
-                <i class="fas fa-arrow-right me-2"></i> Enroll in This Batch
+            <div class="mt-4 d-grid gap-2">
+              <a href="register.php?course=<?= urlencode($c['slug']) ?>" class="btn-neo-gold w-100 justify-content-center">
+                <i class="fas fa-id-card me-2"></i> Book Seat / Admission (₹<?= number_format($admissionFee, 0) ?>)
+              </a>
+              <a href="enrollnow.php?course=<?= urlencode($c['slug']) ?>" class="btn-neo-glass w-100 justify-content-center text-warning border-warning">
+                <i class="fas fa-graduation-cap me-2"></i> Enroll Full Program
               </a>
             </div>
           </div>
@@ -1177,11 +1189,14 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); } endforeach; ?>
         Admissions are currently open for the upcoming 2026 cohort. Complete your application in less than 2 minutes.
       </p>
       <div class="d-flex justify-content-center gap-3 flex-wrap">
-        <a href="enrollnow.php?course=<?= urlencode($c['slug']) ?>" class="btn-neo-gold">
-          <i class="fas fa-user-graduate"></i> Proceed to Direct Admission
+        <a href="register.php?course=<?= urlencode($c['slug']) ?>" class="btn-neo-gold">
+          <i class="fas fa-id-card me-1"></i> Book Seat / Admission (₹<?= number_format($admissionFee, 0) ?>)
+        </a>
+        <a href="enrollnow.php?course=<?= urlencode($c['slug']) ?>" class="btn-neo-glass text-warning border-warning">
+          <i class="fas fa-graduation-cap me-1"></i> Complete Full Enrollment
         </a>
         <a href="explore-course.php" class="btn-neo-glass">
-          <i class="fas fa-th-large"></i> Explore All Other Courses
+          <i class="fas fa-th-large me-1"></i> Explore All Other Courses
         </a>
       </div>
     </div>
@@ -1195,9 +1210,14 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); } endforeach; ?>
         <p class="floating-sub"><?= htmlspecialchars($c['duration']) ?> • <?= htmlspecialchars($c['mode']) ?></p>
       </div>
     </div>
-    <a href="enrollnow.php?course=<?= urlencode($c['slug']) ?>" class="btn-floating-enroll">
-      Apply Now <i class="fas fa-arrow-right ms-1"></i>
-    </a>
+    <div class="d-flex gap-2">
+      <a href="register.php?course=<?= urlencode($c['slug']) ?>" class="btn-floating-enroll" style="background: transparent; border: 1px solid var(--brand-primary); color: #fff;">
+        Book Seat (₹<?= number_format($admissionFee, 0) ?>)
+      </a>
+      <a href="enrollnow.php?course=<?= urlencode($c['slug']) ?>" class="btn-floating-enroll">
+        Enroll Full Course <i class="fas fa-arrow-right ms-1"></i>
+      </a>
+    </div>
   </div>
 
   <!-- Common Footer -->

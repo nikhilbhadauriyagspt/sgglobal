@@ -4,6 +4,8 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 require_once __DIR__ . '/admin/config/db.php';
+require_once __DIR__ . '/includes/settings_helper.php';
+$siteSettings = getGlobalSettings();
 
 $appId = trim($_GET['app_id'] ?? ($_SESSION['student_app_id'] ?? ''));
 
@@ -18,6 +20,13 @@ $adm = $stmt->fetch();
 if (!$adm) {
     die("Error: Admission record not found for Application ID: " . htmlspecialchars($appId));
 }
+
+// Dynamic Site Settings
+$brandLogo   = !empty($siteSettings['site_logo']) ? $siteSettings['site_logo'] : 'assets/images/logo/logopng.png';
+$brandTitle  = $siteSettings['site_title'] ?: 'Skill Grow Institution';
+$brandPhone  = $siteSettings['site_phone'] ?: '+91 9217431562';
+$brandEmail  = $siteSettings['site_email'] ?: 'info@skillgrowinstitution.in';
+$brandAddr   = $siteSettings['site_address'] ?: 'Metro Plaza Meerut, 250002, India';
 
 // Generate receipt serial number
 $receiptSerial = 'RCP-' . date('Y') . '-' . substr(preg_replace('/[^0-9]/', '', $adm['application_id']), -5);
@@ -421,21 +430,21 @@ $studentIdDisplay = !empty($adm['student_id']) ? $adm['student_id'] : ('STU-2026
 
   <!-- A4 Printable Sheet -->
   <div class="receipt-sheet">
-    <img src="assets/images/logo/logopng.png" alt="Watermark Seal" class="watermark-seal">
+    <img src="<?= htmlspecialchars($brandLogo) ?>" alt="Watermark Seal" class="watermark-seal">
 
     <div class="sheet-content">
       
       <!-- HEADER -->
       <div class="sheet-header">
         <div class="brand-group">
-          <img src="assets/images/logo/logopng.png" alt="Skill Grow Institution Logo" class="brand-logo-img">
+          <img src="<?= htmlspecialchars($brandLogo) ?>" alt="<?= htmlspecialchars($brandTitle) ?>" class="brand-logo-img">
           <div>
-            <h1 class="institution-name">Skill Grow Institution</h1>
+            <h1 class="institution-name"><?= htmlspecialchars($brandTitle) ?></h1>
             <p class="institution-tagline">Center for Professional Excellence, Technology & Vocational Studies</p>
             <div class="institution-meta">
               <span><i class="fas fa-globe me-1 text-primary"></i> fairrepairguide.com</span>
-              <span><i class="fas fa-envelope me-1 text-primary"></i> info@skillgrowinstitution.in</span>
-              <span><i class="fas fa-phone me-1 text-primary"></i> +91 9217431562</span>
+              <span><i class="fas fa-envelope me-1 text-primary"></i> <?= htmlspecialchars($brandEmail) ?></span>
+              <span><i class="fas fa-phone me-1 text-primary"></i> <?= htmlspecialchars($brandPhone) ?></span>
             </div>
           </div>
         </div>

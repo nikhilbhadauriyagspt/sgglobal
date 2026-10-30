@@ -1,25 +1,32 @@
+<?php
+require_once __DIR__ . '/includes/settings_helper.php';
+$ftrSettings = getGlobalSettings();
+?>
 ﻿ <footer class="footer-section">
   <div class="container">
     <div class="footer-grid">
       <!-- Brand Section -->
       <div class="footer-brand">
         <a href="#" class="footer-logo">
-          <img src="assets/images/logo/logopng.png" alt="Skill Grow Institution Logo" class="footer-logo-img">
+          <img src="<?= htmlspecialchars($ftrSettings['site_logo']) ?>" alt="<?= htmlspecialchars($ftrSettings['site_title']) ?>" class="footer-logo-img" onerror="this.src='assets/images/logo/logopng.png'">
         </a>
         <p class="footer-brand-text">Empowering your future with cutting-edge skills and knowledge at Skill Grow Institution.</p>
         <div class="footer-social">
-          <a href="https://facebook.com" target="_blank" rel="noopener" aria-label="Facebook" class="social-icon">
-            <i class="fab fa-facebook-f"></i>
-          </a>
-          <a href="https://twitter.com" target="_blank" rel="noopener" aria-label="Twitter" class="social-icon">
-            <i class="fab fa-twitter"></i>
-          </a>
-          <a href="https://linkedin.com" target="_blank" rel="noopener" aria-label="LinkedIn" class="social-icon">
-            <i class="fab fa-linkedin-in"></i>
-          </a>
-          <a href="https://instagram.com" target="_blank" rel="noopener" aria-label="Instagram" class="social-icon">
-            <i class="fab fa-instagram"></i>
-          </a>
+          <?php if (!empty($ftrSettings['social_facebook'])): ?>
+            <a href="<?= htmlspecialchars($ftrSettings['social_facebook']) ?>" target="_blank" rel="noopener" aria-label="Facebook" class="social-icon"><i class="fab fa-facebook-f"></i></a>
+          <?php endif; ?>
+          <?php if (!empty($ftrSettings['social_twitter'])): ?>
+            <a href="<?= htmlspecialchars($ftrSettings['social_twitter']) ?>" target="_blank" rel="noopener" aria-label="Twitter" class="social-icon"><i class="fab fa-twitter"></i></a>
+          <?php endif; ?>
+          <?php if (!empty($ftrSettings['social_linkedin'])): ?>
+            <a href="<?= htmlspecialchars($ftrSettings['social_linkedin']) ?>" target="_blank" rel="noopener" aria-label="LinkedIn" class="social-icon"><i class="fab fa-linkedin-in"></i></a>
+          <?php endif; ?>
+          <?php if (!empty($ftrSettings['social_instagram'])): ?>
+            <a href="<?= htmlspecialchars($ftrSettings['social_instagram']) ?>" target="_blank" rel="noopener" aria-label="Instagram" class="social-icon"><i class="fab fa-instagram"></i></a>
+          <?php endif; ?>
+          <?php if (!empty($ftrSettings['social_youtube'])): ?>
+            <a href="<?= htmlspecialchars($ftrSettings['social_youtube']) ?>" target="_blank" rel="noopener" aria-label="YouTube" class="social-icon"><i class="fab fa-youtube"></i></a>
+          <?php endif; ?>
         </div>
       </div>
 
@@ -148,15 +155,15 @@
         <ul class="footer-contact-list">
           <li>
             <i class="fas fa-map-marker-alt"></i>
-            <span>Metro Plaza Meerut,250002</span>
+            <span><?= htmlspecialchars($ftrSettings['site_address']) ?></span>
           </li>
           <li>
            <i class="fa-solid fa-phone-volume"></i>
-            <span><a href="tel:+919217431562">+91 9217431562</a></span>
+            <span><a href="tel:<?= htmlspecialchars($ftrSettings['site_phone']) ?>"><?= htmlspecialchars($ftrSettings['site_phone']) ?></a></span>
           </li>
           <li>
             <i class="fas fa-envelope"></i>
-            <span><a href="mailto:info@skillgrowinstitution.in">info@skillgrowinstitution.in</a></span>
+            <span><a href="mailto:<?= htmlspecialchars($ftrSettings['site_email']) ?>"><?= htmlspecialchars($ftrSettings['site_email']) ?></a></span>
           </li>
            <li>
             <i class="fas fa-envelope"></i>

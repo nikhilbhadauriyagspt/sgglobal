@@ -18,10 +18,35 @@ $razorpayStatus  = $sysSettings['razorpay_status'] ?? 'active';
 $cStmt = $pdo->query("SELECT id, title, slug, fee, duration, mode, image, rating, reviews, tagline FROM courses WHERE status = 'active' ORDER BY id ASC");
 $courses = $cStmt->fetchAll();
 
-// Determine pre-selected course from GET parameter
+// Determine pre-selected course and student admission from GET parameter
 $selectedCourse = null;
 $reqCourse = trim($_GET['course'] ?? '');
 $reqId = (int)($_GET['id'] ?? 0);
+$reqAppId = trim($_GET['app_id'] ?? '');
+
+if (!empty($reqAppId)) {
+    try {
+        $admQuery = $pdo->prepare("SELECT * FROM admissions WHERE application_id = :aid LIMIT 1");
+        $admQuery->execute(['aid' => $reqAppId]);
+        $preAdm = $admQuery->fetch();
+        if ($preAdm) {
+            if (empty($_SESSION['student_name']))  $studentName  = $preAdm['full_name'];
+            if (empty($_SESSION['student_email'])) $studentEmail = $preAdm['email'];
+            if (empty($_SESSION['student_phone'])) $studentPhone = $preAdm['phone'];
+            if (empty($_SESSION['student_id']))    $studentId    = $preAdm['student_id'];
+
+            // Match course from admission if not explicitly given
+            if (empty($reqCourse) && empty($reqId) && !empty($preAdm['course_name'])) {
+                foreach ($courses as $c) {
+                    if (strcasecmp($c['title'], $preAdm['course_name']) === 0 || strcasecmp($c['slug'], $preAdm['course_name']) === 0) {
+                        $selectedCourse = $c;
+                        break;
+                    }
+                }
+            }
+        }
+    } catch (Exception $e) {}
+}
 
 if (!empty($reqCourse)) {
     foreach ($courses as $c) {
@@ -634,8 +659,16 @@ $studentId    = $_SESSION['student_id'] ?? '';
                 </div>
 
                 <div class="fee-line">
-                  <span>Program Fee (<span id="summaryCourseName"><?= htmlspecialchars($selectedCourse['title'] ?? '') ?></span>)</span>
+                  <span>Standard Program Tuition</span>
                   <span class="text-white fw-bold" id="summaryBaseFee">₹<?= number_format((float)($selectedCourse['fee'] ?? 14999), 0) ?></span>
+                </div>
+
+                <!-- Registration Fee Deduction Strip (Dynamic) -->
+                <div class="fee-line" id="stripAdmissionDeduction" style="display: none; background: rgba(16, 185, 129, 0.1); border: 1px dashed #10b981; border-radius: 8px; padding: 8px 12px; margin: 8px 0;">
+                  <span class="text-success fw-bold">
+                    <i class="fas fa-check-circle me-1"></i> Less: Registration Fee Paid (<span id="summaryDeductAppId">SGI-APP</span>)
+                  </span>
+                  <span class="text-success fw-bold font-monospace" id="summaryDeductAmount">-₹0</span>
                 </div>
 
                 <div class="fee-line">
@@ -727,6 +760,57 @@ $studentId    = $_SESSION['student_id'] ?? '';
       return '₹' + Math.round(val).toLocaleString('en-IN');
     }
 
+    // Admission Deduction State
+    let activeDeduction = {
+      has: false,
+      amount: 0,
+      appId: ''
+    };
+
+    function recalculatePayableFee() {
+      const netPayable = Math.max(0, currentCourse.fee - activeDeduction.amount);
+      document.getElementById('summaryBaseFee').innerText  = formatINR(currentCourse.fee);
+      document.getElementById('summaryTotalFee').innerText = formatINR(netPayable);
+      document.getElementById('btnFeeDisplay').innerText   = formatINR(netPayable);
+
+      const strip = document.getElementById('stripAdmissionDeduction');
+      if (activeDeduction.has && activeDeduction.amount > 0) {
+        strip.style.display = 'flex';
+        document.getElementById('summaryDeductAppId').innerText  = activeDeduction.appId;
+        document.getElementById('summaryDeductAmount').innerText = '-₹' + Math.round(activeDeduction.amount).toLocaleString('en-IN');
+      } else {
+        strip.style.display = 'none';
+      }
+    }
+
+    function checkCourseAdmissionDeduction() {
+      const email = document.getElementById('student_email').value.trim();
+      if (!email || !email.includes('@')) {
+        activeDeduction = { has: false, amount: 0, appId: '' };
+        recalculatePayableFee();
+        return;
+      }
+
+      fetch('ajax_check_admission_deduction.php?email=' + encodeURIComponent(email) + '&course_slug=' + encodeURIComponent(currentCourse.slug) + '&course_id=' + currentCourse.id)
+        .then(res => res.json())
+        .then(data => {
+          if (data.has_admission && data.deduction_amount > 0) {
+            activeDeduction = {
+              has: true,
+              amount: parseFloat(data.deduction_amount),
+              appId: data.application_id
+            };
+          } else {
+            activeDeduction = { has: false, amount: 0, appId: '' };
+          }
+          recalculatePayableFee();
+        })
+        .catch(() => {
+          activeDeduction = { has: false, amount: 0, appId: '' };
+          recalculatePayableFee();
+        });
+    }
+
     // When student changes course from dropdown
     function onCourseSelected(courseId) {
       const select = document.getElementById('courseSelect');
@@ -751,11 +835,7 @@ $studentId    = $_SESSION['student_id'] ?? '';
       document.getElementById('cardCourseRating').innerHTML = '<i class="fas fa-star me-1"></i> ' + rating + ' ★';
       document.getElementById('cardViewCourseLink').href = 'course-detail.php?course=' + encodeURIComponent(currentCourse.slug);
 
-      // Update Summary & Fee
-      document.getElementById('summaryCourseName').innerText = currentCourse.title;
-      document.getElementById('summaryBaseFee').innerText    = formatINR(currentCourse.fee);
-      document.getElementById('summaryTotalFee').innerText   = formatINR(currentCourse.fee);
-      document.getElementById('btnFeeDisplay').innerText     = formatINR(currentCourse.fee);
+      checkCourseAdmissionDeduction();
     }
 
     // Checkout initiation
@@ -793,7 +873,7 @@ $studentId    = $_SESSION['student_id'] ?? '';
       if (RAZORPAY_KEY_ID && RAZORPAY_KEY_ID.startsWith('rzp_')) {
         const options = {
           key: RAZORPAY_KEY_ID,
-          amount: Math.round(currentCourse.fee * 100),
+          amount: Math.round(Math.max(0, currentCourse.fee - activeDeduction.amount) * 100),
           currency: 'INR',
           name: 'Skill Grow Institution',
           description: 'Course Enrollment: ' + currentCourse.title,
@@ -828,8 +908,9 @@ $studentId    = $_SESSION['student_id'] ?? '';
     }
 
     function resetPayButton() {
+      const netPayable = Math.max(0, currentCourse.fee - activeDeduction.amount);
       const btn = document.getElementById('btnPayEnroll');
-      btn.innerHTML = '<i class="fas fa-lock"></i> <span>Pay ' + formatINR(currentCourse.fee) + ' via Razorpay</span>';
+      btn.innerHTML = '<i class="fas fa-lock me-2"></i> <span>Pay ' + formatINR(netPayable) + ' via Razorpay</span>';
       btn.disabled = false;
     }
 

@@ -161,14 +161,30 @@ if ($isLoggedIn) {
         $_SESSION['student_avatar'] = $studentProfile['avatar'] ?? '';
     }
 
-    // 3. Fetch Student Admissions Records (Registration Slips & Uploaded Docs)
+    // 3. Fetch Student Admissions Records (Registration Slips & Uploaded Docs) with Course Slug
     $admStmt = $pdo->prepare("
-        SELECT * FROM admissions 
-        WHERE student_id = :sid OR email = :em 
-        ORDER BY id DESC
+        SELECT a.*, c.slug as course_slug, c.id as course_db_id
+        FROM admissions a 
+        LEFT JOIN courses c ON (a.course_name = c.title OR a.course_name = c.slug)
+        WHERE a.student_id = :sid OR a.email = :em 
+        ORDER BY a.id DESC
     ");
     $admStmt->execute(['sid' => $studentId, 'em' => $studentEmail]);
     $admissionsList = $admStmt->fetchAll();
+
+    // Map which admissions are linked to completed course enrollments
+    $linkedEnrollmentsMap = [];
+    $enrCheckStmt = $pdo->prepare("
+        SELECT id, enrollment_id, admission_id_linked, reg_fee_deducted, original_course_fee, course_name, fee_amount
+        FROM course_enrollments
+        WHERE payment_status = 'paid' AND admission_id_linked IS NOT NULL AND (student_id = :sid OR student_email = :em)
+    ");
+    $enrCheckStmt->execute(['sid' => $studentId, 'em' => $studentEmail]);
+    foreach ($enrCheckStmt->fetchAll() as $row) {
+        if (!empty($row['admission_id_linked'])) {
+            $linkedEnrollmentsMap[$row['admission_id_linked']] = $row;
+        }
+    }
 
     foreach ($admissionsList as $admItem) {
         if ($admItem['payment_status'] === 'paid') {
@@ -811,7 +827,13 @@ $joinedDate   = !empty($studentProfile['created_at']) ? date('d M, Y', strtotime
                               </div>
                               <div class="text-md-end">
                                 <div class="fee-badge">₹<?= number_format((float)$enr['fee_amount'], 0) ?></div>
-                                <small class="text-secondary" style="font-size: 0.74rem;">Tuition Paid</small>
+                                <?php if (!empty($enr['reg_fee_deducted']) && (float)$enr['reg_fee_deducted'] > 0): ?>
+                                  <small class="text-success fw-bold" style="font-size: 0.72rem; display: block;">
+                                    <i class="fas fa-check-circle"></i> ₹<?= number_format((float)$enr['reg_fee_deducted'], 0) ?> Reg Fee Deducted
+                                  </small>
+                                <?php else: ?>
+                                  <small class="text-secondary" style="font-size: 0.74rem;">Tuition Paid in Full</small>
+                                <?php endif; ?>
                               </div>
                             </div>
 
@@ -837,6 +859,14 @@ $joinedDate   = !empty($studentProfile['created_at']) ? date('d M, Y', strtotime
                                 </div>
                               </div>
 
+                              <?php if (!empty($enr['admission_id_linked'])): ?>
+                                <div>
+                                  <span class="text-secondary" style="font-size: 0.74rem;">Admission ID:</span>
+                                  <div class="font-monospace text-success fw-bold" style="font-size: 0.8rem;">
+                                    <?= htmlspecialchars($enr['admission_id_linked']) ?>
+                                  </div>
+                                </div>
+                              <?php endif; ?>
                               <div class="ms-md-auto">
                                 <span class="badge bg-success" style="font-size: 0.74rem;">
                                   <i class="fas fa-check-circle me-1"></i> <?= ucfirst($enr['status']) ?>
@@ -880,7 +910,11 @@ $joinedDate   = !empty($studentProfile['created_at']) ? date('d M, Y', strtotime
 
                   <?php if (!empty($admissionsList)): ?>
                     <?php foreach ($admissionsList as $adm): ?>
-                      <div class="enroll-item-card">
+                      <?php 
+                      $isEnrolled = isset($linkedEnrollmentsMap[$adm['application_id']]);
+                      $linkedEnr  = $isEnrolled ? $linkedEnrollmentsMap[$adm['application_id']] : null;
+                      ?>
+                      <div class="enroll-item-card" style="<?= !$isEnrolled ? 'border-color: rgba(230, 169, 16, 0.45); background: linear-gradient(180deg, #091330 0%, #060d21 100%);' : '' ?>">
                         <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
                           <div>
                             <span class="enrollment-id-badge me-2"><?= htmlspecialchars($adm['application_id']) ?></span>
@@ -888,9 +922,17 @@ $joinedDate   = !empty($studentProfile['created_at']) ? date('d M, Y', strtotime
                               <?= htmlspecialchars($adm['course_name']) ?>
                             </h5>
                           </div>
-                          <span class="badge bg-success">
-                            <i class="fas fa-check-circle me-1"></i> <?= ucfirst(str_replace('_', ' ', $adm['admission_status'])) ?>
-                          </span>
+                          <div>
+                            <?php if ($isEnrolled): ?>
+                              <span class="badge bg-success bg-opacity-25 text-success border border-success px-3 py-1">
+                                <i class="fas fa-graduation-cap me-1"></i> Full Enrollment Confirmed
+                              </span>
+                            <?php else: ?>
+                              <span class="badge bg-warning bg-opacity-25 text-warning border border-warning px-3 py-1">
+                                <i class="fas fa-clock me-1"></i> Seat Reserved &bull; Enrollment Pending
+                              </span>
+                            <?php endif; ?>
+                          </div>
                         </div>
 
                         <div class="row g-2 my-2 small text-secondary">
@@ -899,10 +941,37 @@ $joinedDate   = !empty($studentProfile['created_at']) ? date('d M, Y', strtotime
                           <div class="col-sm-4">Date: <strong class="text-white"><?= date('d M Y', strtotime($adm['created_at'])) ?></strong></div>
                         </div>
 
+                        <?php if (!$isEnrolled): ?>
+                          <div class="p-3 my-3 rounded-2" style="background: rgba(230, 169, 16, 0.08); border: 1px dashed rgba(230, 169, 16, 0.4);">
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                              <div>
+                                <strong class="text-warning"><i class="fas fa-ticket-alt me-1"></i> ₹<?= number_format((float)$adm['fee_amount'], 0) ?> Admission Credit Available</strong>
+                                <p class="text-light mb-0 small">You can now complete your course enrollment. This ₹<?= number_format((float)$adm['fee_amount'], 0) ?> registration fee will automatically be deducted from your course tuition fee.</p>
+                              </div>
+                              <div>
+                                <a href="enrollnow.php?course=<?= urlencode($adm['course_slug'] ?? '') ?>&app_id=<?= urlencode($adm['application_id']) ?>" class="btn btn-warning fw-bold text-dark px-3 py-2" style="border-radius: 8px;">
+                                  <i class="fas fa-arrow-circle-right me-1"></i> Complete Your Enrollment
+                                </a>
+                              </div>
+                            </div>
+                          </div>
+                        <?php else: ?>
+                          <div class="p-2 my-2 rounded-2" style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25);">
+                            <small class="text-success fw-bold">
+                              <i class="fas fa-check-double me-1"></i> ₹<?= number_format((float)$linkedEnr['reg_fee_deducted'], 0) ?> Registration fee was successfully deducted under Course Enrollment ID: <strong><?= htmlspecialchars($linkedEnr['enrollment_id']) ?></strong>
+                            </small>
+                          </div>
+                        <?php endif; ?>
+
                         <div class="d-flex flex-wrap gap-2 mt-3 pt-2 border-top border-secondary border-opacity-25">
-                          <a href="download-receipt.php?app_id=<?= urlencode($adm['application_id']) ?>" target="_blank" class="btn btn-sm btn-warning fw-bold">
+                          <a href="download-receipt.php?app_id=<?= urlencode($adm['application_id']) ?>" target="_blank" class="btn btn-sm btn-outline-warning fw-bold">
                             <i class="fas fa-print me-1"></i> Print Admission Slip
                           </a>
+                          <?php if ($isEnrolled): ?>
+                            <a href="enrollment-receipt.php?id=<?= urlencode($linkedEnr['enrollment_id']) ?>" target="_blank" class="btn btn-sm btn-warning fw-bold text-dark">
+                              <i class="fas fa-receipt me-1"></i> View Tuition Receipt
+                            </a>
+                          <?php endif; ?>
                           <?php if (!empty($adm['photo_doc'])): ?>
                             <a href="<?= htmlspecialchars($adm['photo_doc']) ?>" target="_blank" class="btn btn-sm btn-outline-info">
                               <i class="fas fa-camera me-1"></i> Uploaded Photo
