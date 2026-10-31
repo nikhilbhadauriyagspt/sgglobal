@@ -22,6 +22,8 @@ $aadhaarNumber  = trim($_POST['aadhaar_number'] ?? 'XXXX-XXXX-0000');
 $paymentId      = trim($_POST['razorpay_payment_id'] ?? '');
 $orderId        = trim($_POST['razorpay_order_id'] ?? ('ORD-' . time()));
 $paymentMethod  = trim($_POST['payment_method'] ?? 'Razorpay');
+$rawPassword    = trim($_POST['password'] ?? '');
+$passwordHash   = !empty($rawPassword) ? password_hash($rawPassword, PASSWORD_DEFAULT) : null;
 
 // Validation: Payment is strictly required!
 if (empty($paymentId)) {
@@ -34,14 +36,58 @@ if (empty($fullName) || empty($email) || empty($phone)) {
     exit;
 }
 
+$cleanPhone = preg_replace('/\D/', '', $phone);
+if (strlen($cleanPhone) !== 10) {
+    echo json_encode(['status' => 'error', 'message' => 'Phone / WhatsApp number must be exactly 10 digits.']);
+    exit;
+}
+$phone = $cleanPhone;
+
 // Fetch admission fee from system_settings
 $stmtSet = $pdo->query("SELECT admission_fee FROM system_settings WHERE id = 1 LIMIT 1");
 $feeAmount = (float)($stmtSet->fetch()['admission_fee'] ?? 999.00);
 
 try {
-    // Generate unique IDs
+    // Generate unique Application ID for this course seat booking
     $applicationId = 'SGI-' . date('Y') . '-' . mt_rand(10000, 99999);
-    $studentId     = 'STU-' . date('Y') . '-' . mt_rand(1000, 9999);
+
+    // Check if student already exists (logged-in session, students table, or prior admission)
+    $studentId   = !empty($_SESSION['student_id']) ? trim($_SESSION['student_id']) : '';
+    $existingAdm = null;
+
+    $prevStmt = $pdo->prepare("
+        SELECT student_id, qualification, aadhaar_number, photo_doc, aadhaar_doc, marksheet_doc
+        FROM admissions
+        WHERE email = :em OR (student_id != '' AND student_id = :sid)
+        ORDER BY id DESC LIMIT 1
+    ");
+    $prevStmt->execute(['em' => $email, 'sid' => $studentId]);
+    $existingAdm = $prevStmt->fetch();
+
+    if (empty($studentId) && !empty($existingAdm['student_id'])) {
+        $studentId = $existingAdm['student_id'];
+    }
+
+    if (empty($studentId)) {
+        $stuStmt = $pdo->prepare("SELECT student_id FROM students WHERE email = :em LIMIT 1");
+        $stuStmt->execute(['em' => $email]);
+        $stuRow = $stuStmt->fetch();
+        if (!empty($stuRow['student_id'])) {
+            $studentId = $stuRow['student_id'];
+        }
+    }
+
+    if (empty($studentId)) {
+        $studentId = 'STU-' . date('Y') . '-' . mt_rand(1000, 9999);
+    }
+
+    // Reuse existing KYC / Qualification details when fast-track seat booking is used
+    if ((empty($aadhaarNumber) || $aadhaarNumber === 'XXXX-XXXX-0000') && !empty($existingAdm['aadhaar_number'])) {
+        $aadhaarNumber = $existingAdm['aadhaar_number'];
+    }
+    if ((empty($qualification) || $qualification === 'Graduate') && !empty($existingAdm['qualification'])) {
+        $qualification = $existingAdm['qualification'];
+    }
 
     // ============================================================
     // DEDICATED STUDENT FOLDER CREATION: uploads/students/{Name}_{AppID}/
@@ -54,9 +100,9 @@ try {
         mkdir($absoluteStudentDir, 0777, true);
     }
 
-    $aadhaarDoc   = null;
-    $photoDoc     = null;
-    $marksheetDoc = null;
+    $aadhaarDoc   = $existingAdm['aadhaar_doc'] ?? null;
+    $photoDoc     = $existingAdm['photo_doc'] ?? null;
+    $marksheetDoc = $existingAdm['marksheet_doc'] ?? null;
 
     // 1. Process Aadhaar Document
     if (!empty($_FILES['file_aadhaar']['name']) && $_FILES['file_aadhaar']['error'] === UPLOAD_ERR_OK) {
@@ -87,11 +133,12 @@ try {
 
     // 1. Insert or Update in students table
     $stmtStudent = $pdo->prepare("
-        INSERT INTO students (student_id, full_name, email, phone, course_name, qualification, aadhaar_number, avatar, status)
-        VALUES (:sid, :name, :email, :phone, :course, :qual, :aadh, :avatar, 'active')
+        INSERT INTO students (student_id, full_name, email, phone, password, course_name, qualification, aadhaar_number, avatar, status)
+        VALUES (:sid, :name, :email, :phone, :pwd, :course, :qual, :aadh, :avatar, 'active')
         ON DUPLICATE KEY UPDATE 
             full_name = VALUES(full_name),
             phone = VALUES(phone),
+            password = COALESCE(VALUES(password), password),
             course_name = VALUES(course_name),
             qualification = VALUES(qualification),
             aadhaar_number = VALUES(aadhaar_number),
@@ -102,6 +149,7 @@ try {
         'name'   => $fullName,
         'email'  => $email,
         'phone'  => $phone,
+        'pwd'    => $passwordHash,
         'course' => $courseName,
         'qual'   => $qualification,
         'aadh'   => $aadhaarNumber,

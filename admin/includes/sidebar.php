@@ -7,6 +7,8 @@ $sbAdmCount = 0;
 $sbCourseCount = 0;
 $sbEnrCount = 0;
 $sbCatCount = 0;
+$sbTestiCount = 0;
+$sbCertCount = 0;
 
 if (isset($pdo)) {
     try {
@@ -14,6 +16,8 @@ if (isset($pdo)) {
         $sbCourseCount = (int)($pdo->query("SELECT COUNT(*) FROM courses WHERE status = 'active'")->fetchColumn() ?: 0);
         $sbEnrCount    = (int)($pdo->query("SELECT COUNT(*) FROM course_enrollments")->fetchColumn() ?: 0);
         $sbCatCount    = (int)($pdo->query("SELECT COUNT(*) FROM course_categories")->fetchColumn() ?: 0);
+        $sbTestiCount  = (int)($pdo->query("SELECT COUNT(*) FROM testimonials WHERE status = 'active'")->fetchColumn() ?: 0);
+        $sbCertCount   = (int)($pdo->query("SELECT COUNT(*) FROM certificates")->fetchColumn() ?: 0);
     } catch (Exception $e) {
         // Fallback silently
     }
@@ -67,6 +71,16 @@ if (isset($pdo)) {
           <?php endif; ?>
         </a>
       </li>
+
+      <li class="menu-item <?= ($currentPage === 'certificates.php') ? 'active' : '' ?>">
+        <a href="certificates.php" class="menu-link" title="Official Student Certificates">
+          <span class="menu-icon-box"><i class="fas fa-award menu-icon"></i></span>
+          <span class="menu-text">Certificates</span>
+          <?php if ($sbCertCount > 0): ?>
+            <span class="menu-badge"><?= $sbCertCount ?></span>
+          <?php endif; ?>
+        </a>
+      </li>
     </ul>
 
     <div class="nav-section-title">ACADEMIC CATALOG</div>
@@ -94,6 +108,16 @@ if (isset($pdo)) {
           <span class="menu-text">Course Categories</span>
           <?php if ($sbCatCount > 0): ?>
             <span class="menu-badge"><?= $sbCatCount ?></span>
+          <?php endif; ?>
+        </a>
+      </li>
+
+      <li class="menu-item <?= ($currentPage === 'testimonials.php') ? 'active' : '' ?>">
+        <a href="testimonials.php" class="menu-link" title="Student Testimonials">
+          <span class="menu-icon-box"><i class="fas fa-star menu-icon"></i></span>
+          <span class="menu-text">Testimonials</span>
+          <?php if ($sbTestiCount > 0): ?>
+            <span class="menu-badge"><?= $sbTestiCount ?></span>
           <?php endif; ?>
         </a>
       </li>

@@ -80,11 +80,16 @@ try {
     // 2. Check if this student has a paid admission for this course to DEDUCT fee
     $regFeeDeducted    = 0.00;
     $admissionIdLinked = null;
+    $reqAppId          = trim($input['app_id'] ?? '');
 
     $admCheck = $pdo->prepare("
         SELECT a.id, a.application_id, a.student_id, a.fee_amount
         FROM admissions a
-        WHERE (a.email = :em OR (a.student_id != '' AND a.student_id = :sid))
+        WHERE (
+            (a.application_id != '' AND a.application_id = :aid)
+            OR (a.email != '' AND a.email = :em)
+            OR (a.student_id != '' AND a.student_id = :sid)
+        )
           AND a.payment_status = 'paid'
           AND (
             LOWER(TRIM(a.course_name)) = LOWER(TRIM(:cname))
@@ -93,13 +98,15 @@ try {
           AND a.application_id NOT IN (
             SELECT COALESCE(admission_id_linked, '') FROM course_enrollments WHERE payment_status = 'paid' AND admission_id_linked IS NOT NULL
           )
-        ORDER BY a.id DESC LIMIT 1
+        ORDER BY (a.application_id = :aid_sort) DESC, a.id DESC LIMIT 1
     ");
     $admCheck->execute([
-        'em'    => $studentEmail,
-        'sid'   => $studentId,
-        'cname' => $courseTitle,
-        'cslug' => $courseRealSlug
+        'aid'      => $reqAppId,
+        'em'       => $studentEmail,
+        'sid'      => $studentId,
+        'cname'    => $courseTitle,
+        'cslug'    => $courseRealSlug,
+        'aid_sort' => $reqAppId
     ]);
     $matchedAdm = $admCheck->fetch();
 

@@ -18,11 +18,19 @@ $razorpayStatus  = $sysSettings['razorpay_status'] ?? 'active';
 $cStmt = $pdo->query("SELECT id, title, slug, fee, duration, mode, image, rating, reviews, tagline FROM courses WHERE status = 'active' ORDER BY id ASC");
 $courses = $cStmt->fetchAll();
 
+// Check logged in student first
+$isLoggedIn   = !empty($_SESSION['student_logged_in']);
+$studentName  = $_SESSION['student_name'] ?? '';
+$studentEmail = $_SESSION['student_email'] ?? '';
+$studentPhone = $_SESSION['student_phone'] ?? '';
+$studentId    = $_SESSION['student_id'] ?? '';
+
 // Determine pre-selected course and student admission from GET parameter
 $selectedCourse = null;
 $reqCourse = trim($_GET['course'] ?? '');
 $reqId = (int)($_GET['id'] ?? 0);
 $reqAppId = trim($_GET['app_id'] ?? '');
+$preAdm = null;
 
 if (!empty($reqAppId)) {
     try {
@@ -30,10 +38,10 @@ if (!empty($reqAppId)) {
         $admQuery->execute(['aid' => $reqAppId]);
         $preAdm = $admQuery->fetch();
         if ($preAdm) {
-            if (empty($_SESSION['student_name']))  $studentName  = $preAdm['full_name'];
-            if (empty($_SESSION['student_email'])) $studentEmail = $preAdm['email'];
-            if (empty($_SESSION['student_phone'])) $studentPhone = $preAdm['phone'];
-            if (empty($_SESSION['student_id']))    $studentId    = $preAdm['student_id'];
+            if (empty($studentName))  $studentName  = $preAdm['full_name'];
+            if (empty($studentEmail)) $studentEmail = $preAdm['email'];
+            if (empty($studentPhone)) $studentPhone = $preAdm['phone'];
+            if (empty($studentId))    $studentId    = $preAdm['student_id'];
 
             // Match course from admission if not explicitly given
             if (empty($reqCourse) && empty($reqId) && !empty($preAdm['course_name'])) {
@@ -50,7 +58,7 @@ if (!empty($reqAppId)) {
 
 if (!empty($reqCourse)) {
     foreach ($courses as $c) {
-        if ($c['slug'] === $reqCourse) {
+        if ($c['slug'] === $reqCourse || strcasecmp($c['title'], $reqCourse) === 0) {
             $selectedCourse = $c;
             break;
         }
@@ -69,12 +77,55 @@ if (!$selectedCourse && !empty($courses)) {
     $selectedCourse = $courses[0];
 }
 
-// Check logged in student
-$isLoggedIn = !empty($_SESSION['student_logged_in']);
-$studentName  = $_SESSION['student_name'] ?? '';
-$studentEmail = $_SESSION['student_email'] ?? '';
-$studentPhone = $_SESSION['student_phone'] ?? '';
-$studentId    = $_SESSION['student_id'] ?? '';
+// Pre-calculate seat booking / registration fee deduction on initial page load
+$initialDeduction = [
+    'has'    => false,
+    'amount' => 0.00,
+    'appId'  => ''
+];
+
+if ($selectedCourse && (!empty($studentEmail) || !empty($studentId) || !empty($reqAppId))) {
+    try {
+        $initAdmStmt = $pdo->prepare("
+            SELECT a.id, a.application_id, a.student_id, a.fee_amount
+            FROM admissions a
+            WHERE (
+                (a.application_id != '' AND a.application_id = :aid)
+                OR (a.email != '' AND a.email = :em)
+                OR (a.student_id != '' AND a.student_id = :sid)
+            )
+              AND a.payment_status = 'paid'
+              AND (
+                LOWER(TRIM(a.course_name)) = LOWER(TRIM(:cname))
+                OR LOWER(REPLACE(a.course_name, ' ', '-')) LIKE LOWER(CONCAT('%', :cslug, '%'))
+              )
+              AND a.application_id NOT IN (
+                SELECT COALESCE(admission_id_linked, '') FROM course_enrollments WHERE payment_status = 'paid' AND admission_id_linked IS NOT NULL
+              )
+            ORDER BY (a.application_id = :aid_sort) DESC, a.id DESC
+            LIMIT 1
+        ");
+        $initAdmStmt->execute([
+            'aid'      => $reqAppId,
+            'em'       => $studentEmail,
+            'sid'      => $studentId,
+            'cname'    => $selectedCourse['title'],
+            'cslug'    => $selectedCourse['slug'],
+            'aid_sort' => $reqAppId
+        ]);
+        $initAdm = $initAdmStmt->fetch();
+        if ($initAdm && (float)$initAdm['fee_amount'] > 0) {
+            $initialDeduction = [
+                'has'    => true,
+                'amount' => (float)$initAdm['fee_amount'],
+                'appId'  => $initAdm['application_id']
+            ];
+        }
+    } catch (Exception $e) {}
+}
+
+$baseCourseFee    = (float)($selectedCourse['fee'] ?? 14999);
+$initialNetPayable = max(0, $baseCourseFee - $initialDeduction['amount']);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -660,15 +711,15 @@ $studentId    = $_SESSION['student_id'] ?? '';
 
                 <div class="fee-line">
                   <span>Standard Program Tuition</span>
-                  <span class="text-white fw-bold" id="summaryBaseFee">₹<?= number_format((float)($selectedCourse['fee'] ?? 14999), 0) ?></span>
+                  <span class="text-white fw-bold" id="summaryBaseFee">₹<?= number_format($baseCourseFee, 0) ?></span>
                 </div>
 
                 <!-- Registration Fee Deduction Strip (Dynamic) -->
-                <div class="fee-line" id="stripAdmissionDeduction" style="display: none; background: rgba(16, 185, 129, 0.1); border: 1px dashed #10b981; border-radius: 8px; padding: 8px 12px; margin: 8px 0;">
+                <div class="fee-line" id="stripAdmissionDeduction" style="display: <?= $initialDeduction['has'] ? 'flex' : 'none' ?>; background: rgba(16, 185, 129, 0.1); border: 1px dashed #10b981; border-radius: 8px; padding: 8px 12px; margin: 8px 0;">
                   <span class="text-success fw-bold">
-                    <i class="fas fa-check-circle me-1"></i> Less: Registration Fee Paid (<span id="summaryDeductAppId">SGI-APP</span>)
+                    <i class="fas fa-check-circle me-1"></i> Less: Seat Booking Paid (<span id="summaryDeductAppId"><?= htmlspecialchars($initialDeduction['appId'] ?: 'SGI-APP') ?></span>)
                   </span>
-                  <span class="text-success fw-bold font-monospace" id="summaryDeductAmount">-₹0</span>
+                  <span class="text-success fw-bold font-monospace" id="summaryDeductAmount">-₹<?= number_format($initialDeduction['amount'], 0) ?></span>
                 </div>
 
                 <div class="fee-line">
@@ -688,12 +739,12 @@ $studentId    = $_SESSION['student_id'] ?? '';
 
                 <div class="fee-line total">
                   <span>Total Payable:</span>
-                  <span class="price" id="summaryTotalFee">₹<?= number_format((float)($selectedCourse['fee'] ?? 14999), 0) ?></span>
+                  <span class="price" id="summaryTotalFee">₹<?= number_format($initialNetPayable, 0) ?></span>
                 </div>
 
                 <button type="button" class="btn-pay-enroll" id="btnPayEnroll" onclick="startCheckout()">
                   <i class="fas fa-lock"></i>
-                  <span>Pay <span id="btnFeeDisplay">₹<?= number_format((float)($selectedCourse['fee'] ?? 14999), 0) ?></span> via Razorpay</span>
+                  <span>Pay <span id="btnFeeDisplay">₹<?= number_format($initialNetPayable, 0) ?></span> via Razorpay</span>
                 </button>
 
                 <div class="secure-strip">
@@ -760,11 +811,12 @@ $studentId    = $_SESSION['student_id'] ?? '';
       return '₹' + Math.round(val).toLocaleString('en-IN');
     }
 
-    // Admission Deduction State
+    // Admission Deduction State (Pre-populated from Server if available)
+    const INITIAL_APP_ID = <?= json_encode($reqAppId) ?>;
     let activeDeduction = {
-      has: false,
-      amount: 0,
-      appId: ''
+      has: <?= $initialDeduction['has'] ? 'true' : 'false' ?>,
+      amount: <?= (float)$initialDeduction['amount'] ?>,
+      appId: <?= json_encode($initialDeduction['appId']) ?>
     };
 
     function recalculatePayableFee() {
@@ -785,13 +837,18 @@ $studentId    = $_SESSION['student_id'] ?? '';
 
     function checkCourseAdmissionDeduction() {
       const email = document.getElementById('student_email').value.trim();
-      if (!email || !email.includes('@')) {
+      if (!email && !INITIAL_APP_ID) {
         activeDeduction = { has: false, amount: 0, appId: '' };
         recalculatePayableFee();
         return;
       }
 
-      fetch('ajax_check_admission_deduction.php?email=' + encodeURIComponent(email) + '&course_slug=' + encodeURIComponent(currentCourse.slug) + '&course_id=' + currentCourse.id)
+      const url = 'ajax_check_admission_deduction.php?email=' + encodeURIComponent(email)
+                + '&course_slug=' + encodeURIComponent(currentCourse.slug)
+                + '&course_id=' + currentCourse.id
+                + '&app_id=' + encodeURIComponent(INITIAL_APP_ID || '');
+
+      fetch(url)
         .then(res => res.json())
         .then(data => {
           if (data.has_admission && data.deduction_amount > 0) {
@@ -806,10 +863,27 @@ $studentId    = $_SESSION['student_id'] ?? '';
           recalculatePayableFee();
         })
         .catch(() => {
-          activeDeduction = { has: false, amount: 0, appId: '' };
           recalculatePayableFee();
         });
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      recalculatePayableFee();
+      checkCourseAdmissionDeduction();
+
+      const emailInput = document.getElementById('student_email');
+      if (emailInput) {
+        emailInput.addEventListener('change', checkCourseAdmissionDeduction);
+        emailInput.addEventListener('blur', checkCourseAdmissionDeduction);
+      }
+
+      const phoneInput = document.getElementById('student_phone');
+      if (phoneInput) {
+        phoneInput.addEventListener('input', function() {
+          this.value = this.value.replace(/\D/g, '').slice(0, 10);
+        });
+      }
+    });
 
     // When student changes course from dropdown
     function onCourseSelected(courseId) {
@@ -928,7 +1002,8 @@ $studentId    = $_SESSION['student_id'] ?? '';
       payload.append('student_email', email);
       payload.append('student_phone', phone);
       payload.append('student_id', studentId);
-      payload.append('fee_amount', currentCourse.fee);
+      payload.append('fee_amount', Math.max(0, currentCourse.fee - activeDeduction.amount));
+      payload.append('app_id', activeDeduction.appId || INITIAL_APP_ID || '');
       payload.append('razorpay_payment_id', paymentId);
       payload.append('razorpay_order_id', orderId);
       payload.append('payment_method', method);
@@ -962,18 +1037,6 @@ $studentId    = $_SESSION['student_id'] ?? '';
         resetPayButton();
       });
     }
-
-    // Header scroll dynamic effect
-    const navbar = document.querySelector('.navbar');
-    window.addEventListener('scroll', function() {
-      if (navbar) {
-        if ((window.pageYOffset || document.documentElement.scrollTop) > 40) {
-          navbar.classList.add('scrolled');
-        } else {
-          navbar.classList.remove('scrolled');
-        }
-      }
-    });
   </script>
 </body>
 </html>

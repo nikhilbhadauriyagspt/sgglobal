@@ -210,6 +210,19 @@ if ($isLoggedIn) {
     foreach ($enrollments as $enr) {
         $totalFees += (float)$enr['fee_amount'];
     }
+
+    // 5. Fetch Student Verified Certificates
+    require_once __DIR__ . '/includes/certificates_helper.php';
+    ensureCertificatesTable($pdo);
+    $certStmt = $pdo->prepare("
+        SELECT * FROM certificates 
+        WHERE student_id = :sid OR student_email = :em 
+        ORDER BY id DESC
+    ");
+    $certStmt->execute(['sid' => $studentId, 'em' => $studentEmail]);
+    $studentCertificates = $certStmt->fetchAll();
+} else {
+    $studentCertificates = [];
 }
 
 $qualValue    = $studentProfile['qualification'] ?? ($admissionsList[0]['qualification'] ?? '');
@@ -727,6 +740,11 @@ $joinedDate   = !empty($studentProfile['created_at']) ? date('d M, Y', strtotime
                 </button>
               </li>
               <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-certs-btn" data-bs-toggle="pill" data-bs-target="#tabStudentCertificates" type="button" role="tab">
+                  <i class="fas fa-award"></i> Certificates (<?= count($studentCertificates) ?>)
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
                 <button class="nav-link" id="tab-security-btn" data-bs-toggle="pill" data-bs-target="#tabSecurityPassword" type="button" role="tab">
                   <i class="fas fa-key"></i> Change Password
                 </button>
@@ -999,7 +1017,108 @@ $joinedDate   = !empty($studentProfile['created_at']) ? date('d M, Y', strtotime
                 </div>
               </div>
 
-              <!-- TAB 4: CHANGE ACCOUNT PASSWORD -->
+              <!-- TAB 4: OFFICIAL CERTIFICATES -->
+              <div class="tab-pane fade" id="tabStudentCertificates" role="tabpanel">
+                <div class="bento-card">
+                  <div class="bento-card-header">
+                    <h3 class="bento-card-title">
+                      <i class="fas fa-award text-warning"></i> My Official Verified Certificates (<?= count($studentCertificates) ?>)
+                    </h3>
+                    <a href="certificate.php" class="btn btn-sm btn-outline-warning rounded-pill px-3">
+                      <i class="fas fa-paper-plane me-1"></i> Request Certificate
+                    </a>
+                  </div>
+
+                  <?php if (!empty($studentCertificates)): ?>
+                    <?php foreach ($studentCertificates as $certItem): 
+                      $cStatus = strtolower(trim($certItem['status'] ?? 'pending'));
+                    ?>
+                      <div class="enroll-item-card" style="border-left: 4px solid <?= $cStatus === 'approved' ? 'var(--brand-primary)' : ($cStatus === 'pending' ? '#e6a910' : '#ef4444') ?>;">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+                          <div>
+                            <span class="badge bg-dark border border-secondary text-warning me-2" style="font-size: 0.72rem;">
+                              <?= htmlspecialchars($certItem['certificate_type'] ?: 'Certificate of Completion') ?>
+                            </span>
+                            <h4 class="text-white d-inline-block mb-0" style="font-family: var(--font-heading); font-size: 1.15rem; font-weight: 700;">
+                              <?= htmlspecialchars($certItem['course_name']) ?>
+                            </h4>
+                          </div>
+                          <div>
+                            <?php if ($cStatus === 'approved'): ?>
+                              <span class="badge bg-success" style="font-size: 0.76rem;">
+                                <i class="fas fa-check-double me-1"></i> Grade: <?= htmlspecialchars($certItem['grade'] ?: 'A (Distinction)') ?>
+                              </span>
+                            <?php elseif ($cStatus === 'pending'): ?>
+                              <span class="badge bg-warning text-dark" style="font-size: 0.76rem;">
+                                <i class="fas fa-clock me-1"></i> In Verification
+                              </span>
+                            <?php else: ?>
+                              <span class="badge bg-danger" style="font-size: 0.76rem;">
+                                <i class="fas fa-times-circle me-1"></i> Rejected
+                              </span>
+                            <?php endif; ?>
+                          </div>
+                        </div>
+
+                        <div class="d-flex flex-wrap align-items-center gap-3 my-3 p-2 rounded-2" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);">
+                          <div>
+                            <span class="text-secondary" style="font-size: 0.74rem;">Certificate ID:</span>
+                            <div class="enrollment-id-badge">
+                              <span><?= htmlspecialchars($certItem['certificate_number']) ?></span>
+                            </div>
+                          </div>
+                          <div>
+                            <span class="text-secondary" style="font-size: 0.74rem;">Date:</span>
+                            <div class="text-white" style="font-size: 0.8rem;">
+                              <?= date('d M, Y', strtotime($certItem['issue_date'])) ?>
+                            </div>
+                          </div>
+                          <div>
+                            <span class="text-secondary" style="font-size: 0.74rem;">Status:</span>
+                            <div>
+                              <?php if ($cStatus === 'approved'): ?>
+                                <span class="text-success fw-bold" style="font-size: 0.8rem;"><i class="fas fa-shield-alt"></i> Officially Verified &amp; Issued</span>
+                              <?php elseif ($cStatus === 'pending'): ?>
+                                <span class="text-warning fw-bold" style="font-size: 0.8rem;"><i class="fas fa-clock fa-spin me-1"></i> Awaiting Admin Approval</span>
+                              <?php else: ?>
+                                <span class="text-danger fw-bold" style="font-size: 0.8rem;"><i class="fas fa-times-circle"></i> Request Rejected</span>
+                              <?php endif; ?>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                          <?php if ($cStatus === 'approved'): ?>
+                            <a href="view-certificate.php?cert=<?= urlencode($certItem['certificate_number']) ?>" target="_blank" class="btn btn-sm btn-warning fw-bold text-dark" style="border-radius: 8px;">
+                              <i class="fas fa-print me-1"></i> View &amp; Download Certificate
+                            </a>
+                          <?php else: ?>
+                            <a href="view-certificate.php?cert=<?= urlencode($certItem['certificate_number']) ?>" target="_blank" class="btn btn-sm btn-outline-warning" style="border-radius: 8px;">
+                              <i class="fas fa-clock me-1"></i> Track Verification Status
+                            </a>
+                          <?php endif; ?>
+                          <span class="text-secondary small ms-auto">Academic Council Certification Board</span>
+                        </div>
+                      </div>
+                    <?php endforeach; ?>
+                  <?php else: ?>
+                    <div class="text-center py-5">
+                      <div style="font-size: 42px; color: var(--brand-primary); margin-bottom: 14px;">
+                        <i class="fas fa-award"></i>
+                      </div>
+                      <h5 class="text-white">No Certificate Issued Yet</h5>
+                      <p class="text-secondary small" style="max-width: 480px; margin: 0 auto 18px;">
+                        Once you complete your course evaluation or submit a certificate request, your officially verified credential will appear here and be delivered to your email.
+                      </p>
+                      <a href="certificate.php" class="btn btn-warning btn-sm fw-bold px-3">
+                        <i class="fas fa-paper-plane me-1"></i> Submit Certificate Request
+                      </a>
+                    </div>
+                  <?php endif; ?>
+                </div>
+              </div>
+
+              <!-- TAB 5: CHANGE ACCOUNT PASSWORD -->
               <div class="tab-pane fade" id="tabSecurityPassword" role="tabpanel">
                 <div class="bento-card">
                   <div class="bento-card-header">

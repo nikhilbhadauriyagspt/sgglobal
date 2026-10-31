@@ -102,6 +102,85 @@ $metrics = $mStmt->fetch() ?: ['total_count' => 0, 'total_revenue' => 0, 'unique
 
 // Active courses list for filter
 $coursesList = $pdo->query("SELECT title, slug FROM courses ORDER BY title ASC")->fetchAll();
+
+// Group enrollments by unique student (student_id or student_email) so 1 Student = 1 Row
+$groupedEnrollments = [];
+foreach ($enrollments as $enr) {
+    $stuKey = !empty($enr['student_id'])
+        ? strtolower(trim($enr['student_id']))
+        : strtolower(trim($enr['student_email']));
+    if (empty($stuKey)) {
+        $stuKey = 'enr_' . $enr['id'];
+    }
+
+    $origFeeVal = !empty($enr['original_course_fee'])
+        ? (float)$enr['original_course_fee']
+        : ((float)$enr['fee_amount'] + (float)($enr['reg_fee_deducted'] ?? 0));
+    $regDedVal  = (float)($enr['reg_fee_deducted'] ?? 0);
+
+    $courseItem = [
+        'id'                  => $enr['id'],
+        'enrollment_id'       => $enr['enrollment_id'],
+        'course_name'         => $enr['course_name'],
+        'course_slug'         => $enr['course_slug'],
+        'fee_amount'          => (float)$enr['fee_amount'],
+        'original_fee'        => $origFeeVal,
+        'reg_deducted'        => $regDedVal,
+        'admission_id_linked' => $enr['admission_id_linked'] ?? '',
+        'payment_status'      => $enr['payment_status'],
+        'payment_method'      => $enr['payment_method'],
+        'razorpay_payment_id' => $enr['razorpay_payment_id'] ?: 'Direct',
+        'enrolled_at'         => date('d M, Y', strtotime($enr['enrolled_at'])),
+        'enrolled_time'       => date('h:i A', strtotime($enr['enrolled_at']))
+    ];
+
+    $avatarImg = !empty($enr['student_avatar']) ? $enr['student_avatar'] : (!empty($enr['photo_doc']) ? $enr['photo_doc'] : '');
+
+    if (!isset($groupedEnrollments[$stuKey])) {
+        $groupedEnrollments[$stuKey] = [
+            'id'                  => $enr['id'],
+            'enrollment_id'       => $enr['enrollment_id'],
+            'student_id'          => $enr['student_id'] ?: 'N/A',
+            'student_name'        => $enr['student_name'],
+            'student_email'       => $enr['student_email'],
+            'student_phone'       => $enr['student_phone'],
+            'course_name'         => $enr['course_name'],
+            'course_slug'         => $enr['course_slug'],
+            'fee_amount'          => number_format((float)$enr['fee_amount'], 2),
+            'total_fee_num'       => (float)$enr['fee_amount'],
+            'original_fee'        => number_format($origFeeVal, 2),
+            'reg_deducted'        => number_format($regDedVal, 2),
+            'admission_id_linked' => $enr['admission_id_linked'] ?? '',
+            'payment_status'      => $enr['payment_status'],
+            'payment_method'      => $enr['payment_method'],
+            'razorpay_payment_id' => $enr['razorpay_payment_id'] ?: 'N/A',
+            'razorpay_order_id'   => $enr['razorpay_order_id'] ?: 'N/A',
+            'enrolled_at'         => date('d M, Y h:i A', strtotime($enr['enrolled_at'])),
+            'qualification'       => !empty($enr['student_qualification']) ? $enr['student_qualification'] : 'Not Provided',
+            'aadhaar_number'      => !empty($enr['student_aadhaar']) ? $enr['student_aadhaar'] : 'Not Provided',
+            'application_id'      => !empty($enr['application_id']) ? $enr['application_id'] : '',
+            'admission_status'    => !empty($enr['admission_status']) ? $enr['admission_status'] : '',
+            'photo_doc'           => $avatarImg,
+            'aadhaar_doc'         => !empty($enr['aadhaar_doc']) ? $enr['aadhaar_doc'] : '',
+            'marksheet_doc'       => !empty($enr['marksheet_doc']) ? $enr['marksheet_doc'] : '',
+            'courses'             => [$courseItem]
+        ];
+    } else {
+        $groupedEnrollments[$stuKey]['total_fee_num'] += (float)$enr['fee_amount'];
+        $groupedEnrollments[$stuKey]['fee_amount'] = number_format($groupedEnrollments[$stuKey]['total_fee_num'], 2);
+        $groupedEnrollments[$stuKey]['courses'][] = $courseItem;
+
+        if (empty($groupedEnrollments[$stuKey]['photo_doc']) && !empty($avatarImg)) {
+            $groupedEnrollments[$stuKey]['photo_doc'] = $avatarImg;
+        }
+        if (empty($groupedEnrollments[$stuKey]['aadhaar_doc']) && !empty($enr['aadhaar_doc'])) {
+            $groupedEnrollments[$stuKey]['aadhaar_doc'] = $enr['aadhaar_doc'];
+        }
+        if (empty($groupedEnrollments[$stuKey]['marksheet_doc']) && !empty($enr['marksheet_doc'])) {
+            $groupedEnrollments[$stuKey]['marksheet_doc'] = $enr['marksheet_doc'];
+        }
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -507,14 +586,14 @@ $coursesList = $pdo->query("SELECT title, slug FROM courses ORDER BY title ASC")
           </form>
         </div>
 
-        <!-- Main Enrollments Table -->
+        <!-- Main Enrollments Table (1 Student = 1 Row Grouped View) -->
         <div class="bento-card" style="border-radius: 12px; overflow: hidden;">
-          <div class="bento-header d-flex justify-content-between align-items-center py-3 px-4">
+          <div class="bento-header d-flex justify-content-between align-items-center py-3 px-4 flex-wrap gap-2">
             <h2 class="bento-title mb-0" style="font-size: 1.05rem;">
-              <i class="fas fa-user-graduate text-warning me-2"></i> Verified Course Enrollments (<?= count($enrollments) ?>)
+              <i class="fas fa-user-graduate text-warning me-2"></i> Enrolled Students (<?= count($groupedEnrollments) ?> Students &bull; <?= count($enrollments) ?> Course Enrollments)
             </h2>
             <span class="badge bg-dark border border-secondary text-white-50 font-monospace">
-              Live Gateway Sync
+              1 Row Per Student &bull; Live Gateway Sync
             </span>
           </div>
 
@@ -522,163 +601,130 @@ $coursesList = $pdo->query("SELECT title, slug FROM courses ORDER BY title ASC")
             <table class="admin-table">
               <thead>
                 <tr>
-                  <th>Student</th>
-                  <th>Enrollment & Student ID</th>
-                  <th>Enrolled Academic Course</th>
-                  <th>Tuition Fee</th>
-                  <th>Gateway</th>
-                  <th>Actions</th>
+                  <th style="min-width: 240px;">Student & ID</th>
+                  <th style="min-width: 440px;">Enrolled Courses & Tuition Breakdown</th>
+                  <th>Total Tuition Paid</th>
+                  <th>Dossier</th>
                 </tr>
               </thead>
               <tbody>
-                <?php if (!empty($enrollments)): ?>
-                  <?php foreach ($enrollments as $enr): 
-                    // Prepare JSON payload for the Dossier Modal
-                    $studentData = [
-                        'id' => $enr['id'],
-                        'enrollment_id' => $enr['enrollment_id'],
-                        'student_id' => $enr['student_id'] ?: 'N/A',
-                        'student_name' => $enr['student_name'],
-                        'student_email' => $enr['student_email'],
-                        'student_phone' => $enr['student_phone'],
-                        'course_name' => $enr['course_name'],
-                        'course_slug' => $enr['course_slug'],
-                        'fee_amount' => number_format((float)$enr['fee_amount'], 2),
-                        'original_fee' => !empty($enr['original_course_fee']) ? number_format((float)$enr['original_course_fee'], 2) : number_format((float)$enr['fee_amount'] + (float)($enr['reg_fee_deducted'] ?? 0), 2),
-                        'reg_deducted' => !empty($enr['reg_fee_deducted']) ? number_format((float)$enr['reg_fee_deducted'], 2) : '0.00',
-                        'admission_id_linked' => $enr['admission_id_linked'] ?? '',
-                        'payment_status' => $enr['payment_status'],
-                        'payment_method' => $enr['payment_method'],
-                        'razorpay_payment_id' => $enr['razorpay_payment_id'] ?: 'N/A',
-                        'razorpay_order_id' => $enr['razorpay_order_id'] ?: 'N/A',
-                        'enrolled_at' => date('d M, Y h:i A', strtotime($enr['enrolled_at'])),
-                        'qualification' => !empty($enr['student_qualification']) ? $enr['student_qualification'] : 'Not Provided',
-                        'aadhaar_number' => !empty($enr['student_aadhaar']) ? $enr['student_aadhaar'] : 'Not Provided',
-                        'application_id' => !empty($enr['application_id']) ? $enr['application_id'] : '',
-                        'admission_status' => !empty($enr['admission_status']) ? $enr['admission_status'] : '',
-                        'photo_doc' => !empty($enr['student_avatar']) ? $enr['student_avatar'] : (!empty($enr['photo_doc']) ? $enr['photo_doc'] : ''),
-                        'aadhaar_doc' => !empty($enr['aadhaar_doc']) ? $enr['aadhaar_doc'] : '',
-                        'marksheet_doc' => !empty($enr['marksheet_doc']) ? $enr['marksheet_doc'] : ''
-                    ];
-                    $jsonPayload = htmlspecialchars(json_encode($studentData, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP), ENT_QUOTES, 'UTF-8');
+                <?php if (!empty($groupedEnrollments)): ?>
+                  <?php foreach ($groupedEnrollments as $stu): 
+                    $jsonPayload = htmlspecialchars(json_encode($stu, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP), ENT_QUOTES, 'UTF-8');
+                    $courseCount = count($stu['courses']);
+                    $avatarImg   = $stu['photo_doc'];
                   ?>
                     <tr>
-                      <!-- 1. Student / Candidate (Avatar + Name + Contact) -->
+                      <!-- 1. Student / Candidate (Avatar + Name + Contact + Student ID) -->
                       <td>
-                        <div class="d-flex align-items-center gap-2">
-                          <?php 
-                            $avatarImg = !empty($enr['student_avatar']) ? $enr['student_avatar'] : (!empty($enr['photo_doc']) ? $enr['photo_doc'] : '');
-                          ?>
+                        <div class="d-flex align-items-start gap-2">
                           <?php if (!empty($avatarImg) && file_exists(__DIR__ . '/../' . $avatarImg)): ?>
-                            <img src="../<?= htmlspecialchars($avatarImg) ?>" alt="Photo" class="student-avatar-thumb" onclick='openStudentDossier(<?= $jsonPayload ?>)' title="Click to view Dossier">
+                            <img src="../<?= htmlspecialchars($avatarImg) ?>" alt="Photo" class="student-avatar-thumb mt-1" onclick='openStudentDossier(<?= $jsonPayload ?>)' title="Click to view Dossier">
                           <?php else: ?>
-                            <span class="student-avatar-thumb" onclick='openStudentDossier(<?= $jsonPayload ?>)' title="Click to view Dossier">
-                              <?= strtoupper(substr($enr['student_name'], 0, 2)) ?>
+                            <span class="student-avatar-thumb mt-1" onclick='openStudentDossier(<?= $jsonPayload ?>)' title="Click to view Dossier">
+                              <?= strtoupper(substr($stu['student_name'], 0, 2)) ?>
                             </span>
                           <?php endif; ?>
                           <div>
                             <div>
                               <button type="button" class="student-btn-link" onclick='openStudentDossier(<?= $jsonPayload ?>)' title="View Complete Student Dossier">
-                                <?= htmlspecialchars($enr['student_name']) ?>
+                                <?= htmlspecialchars($stu['student_name']) ?>
                               </button>
                             </div>
-                            <div class="text-light-contrast">
-                              <i class="fas fa-envelope text-warning me-1"></i><?= htmlspecialchars($enr['student_email']) ?>
-                              &bull; <i class="fas fa-phone text-success ms-1 me-1"></i><?= htmlspecialchars($enr['student_phone']) ?>
+                            <div class="text-light-contrast mt-1">
+                              <i class="fas fa-envelope text-warning me-1"></i><?= htmlspecialchars($stu['student_email']) ?><br>
+                              <i class="fas fa-phone text-success me-1"></i><?= htmlspecialchars($stu['student_phone']) ?>
+                            </div>
+                            <div class="d-flex align-items-center gap-1 mt-2 flex-wrap">
+                              <?php if (!empty($stu['student_id']) && $stu['student_id'] !== 'N/A'): ?>
+                                <span class="stu-id-badge" onclick='openStudentDossier(<?= $jsonPayload ?>)' title="Click to view Dossier">
+                                  ID: <?= htmlspecialchars($stu['student_id']) ?>
+                                </span>
+                              <?php endif; ?>
+                              <?php if ($courseCount > 1): ?>
+                                <span class="badge bg-primary bg-opacity-25 text-info border border-info" style="font-size: 0.68rem;">
+                                  <i class="fas fa-layer-group me-1"></i><?= $courseCount ?> Courses
+                                </span>
+                              <?php endif; ?>
                             </div>
                           </div>
                         </div>
                       </td>
 
-                      <!-- 2. Enrollment & Student ID -->
+                      <!-- 2. Enrolled Courses Stacked Cleanly -->
                       <td>
-                        <div>
-                          <span class="enrollment-badge"><?= htmlspecialchars($enr['enrollment_id']) ?></span>
-                        </div>
-                        <div class="d-flex align-items-center gap-1 mt-1 flex-wrap">
-                          <?php if (!empty($enr['student_id'])): ?>
-                            <span class="stu-id-badge" onclick='openStudentDossier(<?= $jsonPayload ?>)' title="Click to view Dossier">
-                              ID: <?= htmlspecialchars($enr['student_id']) ?>
-                            </span>
-                          <?php endif; ?>
-                          <?php if (!empty($enr['application_id'])): ?>
-                            <span class="app-id-badge-sm" title="Linked Admission Application ID">
-                              App: <?= htmlspecialchars($enr['application_id']) ?>
-                            </span>
-                          <?php endif; ?>
+                        <div class="d-flex flex-column gap-2">
+                          <?php foreach ($stu['courses'] as $cItem): ?>
+                            <div class="p-2 rounded-3" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08);">
+                              <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                                <div>
+                                  <div class="fw-bold text-white" style="font-size: 0.86rem;">
+                                    <i class="fas fa-graduation-cap text-warning me-1" style="font-size: 0.75rem;"></i>
+                                    <?= htmlspecialchars($cItem['course_name']) ?>
+                                  </div>
+                                  <div class="d-flex align-items-center gap-2 flex-wrap mt-1">
+                                    <span class="enrollment-badge" style="font-size: 0.70rem; padding: 1px 6px;">
+                                      <?= htmlspecialchars($cItem['enrollment_id']) ?>
+                                    </span>
+                                    <span class="text-light-contrast" style="font-size: 0.74rem;">
+                                      <i class="far fa-calendar-alt text-warning me-1"></i><?= htmlspecialchars($cItem['enrolled_at']) ?>
+                                    </span>
+                                    <span class="text-success fw-bold font-monospace" style="font-size: 0.78rem;">
+                                      ₹<?= number_format($cItem['fee_amount'], 0) ?>
+                                    </span>
+                                    <?php if ($cItem['reg_deducted'] > 0): ?>
+                                      <span class="badge bg-success bg-opacity-25 text-success border border-success" style="font-size: 0.65rem;" title="Seat Booking Deducted">
+                                        -₹<?= number_format($cItem['reg_deducted'], 0) ?> (<?= htmlspecialchars($cItem['admission_id_linked']) ?>)
+                                      </span>
+                                    <?php endif; ?>
+                                    <span class="font-monospace" style="font-size: 0.68rem; color: #38bdf8;">
+                                      <?= htmlspecialchars($cItem['razorpay_payment_id']) ?>
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div class="d-flex align-items-center gap-1">
+                                  <a href="../enrollment-receipt.php?id=<?= urlencode($cItem['enrollment_id']) ?>" target="_blank" class="btn btn-outline-warning btn-sm px-2 py-1" title="Receipt (<?= htmlspecialchars($cItem['enrollment_id']) ?>)" style="border-radius: 5px; font-size: 0.72rem;">
+                                    <i class="fas fa-file-invoice me-1"></i> Receipt
+                                  </a>
+
+                                  <form method="POST" action="enrollments.php" class="d-inline" onsubmit="return confirm('Permanently delete enrollment <?= htmlspecialchars($cItem['enrollment_id']) ?> for <?= htmlspecialchars($stu['student_name']) ?>?');">
+                                    <input type="hidden" name="action" value="delete_enrollment">
+                                    <input type="hidden" name="enrollment_id" value="<?= $cItem['id'] ?>">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm px-2 py-1" title="Delete Enrollment" style="border-radius: 5px; font-size: 0.72rem;">
+                                      <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                  </form>
+                                </div>
+                              </div>
+                            </div>
+                          <?php endforeach; ?>
                         </div>
                       </td>
 
-                      <!-- 3. Enrolled Course -->
-                      <td>
-                        <div class="fw-bold text-white mb-1" style="font-size: 0.88rem;">
-                          <?= htmlspecialchars($enr['course_name']) ?>
-                        </div>
-                        <div class="text-light-contrast">
-                          <i class="far fa-calendar-alt text-warning me-1"></i><?= date('d M, Y', strtotime($enr['enrolled_at'])) ?>
-                          &bull; <small class="text-muted"><?= date('h:i A', strtotime($enr['enrolled_at'])) ?></small>
-                        </div>
-                      </td>
-
-                      <!-- 4. Tuition Fee -->
+                      <!-- 3. Total Tuition Paid -->
                       <td>
                         <div class="d-flex align-items-center gap-1">
-                          <span class="text-success fw-bold font-monospace" style="font-size: 0.95rem;">
-                            ₹<?= number_format((float)$enr['fee_amount'], 2) ?>
+                          <span class="text-success fw-bold font-monospace" style="font-size: 0.98rem;">
+                            ₹<?= number_format((float)$stu['total_fee_num'], 2) ?>
                           </span>
                         </div>
-                        <?php if (!empty($enr['reg_fee_deducted']) && (float)$enr['reg_fee_deducted'] > 0): ?>
-                          <div class="mt-1">
-                            <span class="badge bg-success bg-opacity-25 text-success border border-success" style="font-size: 0.68rem;" title="Admission Fee Auto-Deducted">
-                              <i class="fas fa-check-circle me-1"></i> -₹<?= number_format((float)$enr['reg_fee_deducted'], 0) ?> (<?= htmlspecialchars($enr['admission_id_linked'] ?? '') ?>)
-                            </span>
-                          </div>
-                        <?php endif; ?>
                         <span class="badge bg-success text-white px-2 py-0 mt-1" style="font-size: 0.68rem; font-weight: 800;">
-                          PAID
+                          PAID (<?= $courseCount ?> <?= $courseCount > 1 ? 'Courses' : 'Course' ?>)
                         </span>
                       </td>
 
-                      <!-- 5. Payment Gateway -->
+                      <!-- 4. Dossier Action -->
                       <td>
-                        <div>
-                          <span class="badge bg-dark border border-secondary text-white" style="font-size: 0.72rem;">
-                            <i class="fas fa-bolt text-warning me-1"></i><?= htmlspecialchars($enr['payment_method']) ?>
-                          </span>
-                        </div>
-                        <div class="font-monospace mt-1" style="font-size: 0.72rem; color: #38bdf8;">
-                          <?= htmlspecialchars($enr['razorpay_payment_id'] ?: 'Direct') ?>
-                        </div>
-                      </td>
-
-                      <!-- 6. Compact Actions -->
-                      <td>
-                        <div class="d-flex align-items-center gap-1">
-                          <!-- Open Student Dossier Modal Button -->
-                          <button type="button" class="btn btn-outline-info btn-sm px-2 py-1" onclick='openStudentDossier(<?= $jsonPayload ?>)' title="View Student Profile & Dossier" style="border-radius: 6px; font-size: 0.78rem;">
-                            <i class="fas fa-id-card me-1"></i> Details
-                          </button>
-
-                          <!-- Official Receipt Link -->
-                          <a href="../enrollment-receipt.php?id=<?= urlencode($enr['enrollment_id']) ?>" target="_blank" class="btn btn-outline-warning btn-sm px-2 py-1" title="View & Print Official Receipt" style="border-radius: 6px; font-size: 0.78rem;">
-                            <i class="fas fa-file-invoice me-1"></i> Receipt
-                          </a>
-
-                          <!-- Delete Action Form -->
-                          <form method="POST" action="enrollments.php" class="d-inline" onsubmit="return confirm('Permanently delete enrollment record <?= htmlspecialchars($enr['enrollment_id']) ?> for <?= htmlspecialchars($enr['student_name']) ?>?');">
-                            <input type="hidden" name="action" value="delete_enrollment">
-                            <input type="hidden" name="enrollment_id" value="<?= $enr['id'] ?>">
-                            <button type="submit" class="btn btn-outline-danger btn-sm px-2 py-1" title="Delete Enrollment" style="border-radius: 6px; font-size: 0.78rem;">
-                              <i class="fas fa-trash-alt"></i>
-                            </button>
-                          </form>
-                        </div>
+                        <button type="button" class="btn btn-outline-info btn-sm px-3 py-1" onclick='openStudentDossier(<?= $jsonPayload ?>)' title="View Student Profile & Dossier" style="border-radius: 6px; font-size: 0.78rem; white-space: nowrap;">
+                          <i class="fas fa-id-card me-1"></i> Full Dossier
+                        </button>
                       </td>
                     </tr>
                   <?php endforeach; ?>
                 <?php else: ?>
                   <tr>
-                    <td colspan="6" class="text-center py-5 text-muted">
+                    <td colspan="4" class="text-center py-5 text-muted">
                       <i class="fas fa-folder-open fa-2x mb-3 d-block text-secondary"></i>
                       No course enrollments match the selected filters.
                     </td>
@@ -1017,8 +1063,11 @@ $coursesList = $pdo->query("SELECT title, slug FROM courses ORDER BY title ASC")
       document.getElementById('modalAadhaar').innerText = data.aadhaar_number || 'Not Provided';
 
       // Course & Ledger
-      document.getElementById('modalCourseTitle').innerText = data.course_name + (data.course_slug ? ' (' + data.course_slug + ')' : '');
-            document.getElementById('modalFee').innerText = '₹' + data.fee_amount;
+      const courses = Array.isArray(data.courses) && data.courses.length > 0 ? data.courses : [];
+      document.getElementById('modalCourseTitle').innerText = courses.length > 0
+        ? courses.map(c => c.course_name).join(' • ')
+        : (data.course_name + (data.course_slug ? ' (' + data.course_slug + ')' : ''));
+      document.getElementById('modalFee').innerText = '₹' + data.fee_amount;
       const dedRow = document.getElementById('modalDeductionRow');
       if (data.reg_deducted && parseFloat(data.reg_deducted) > 0) {
         dedRow.style.display = 'block';

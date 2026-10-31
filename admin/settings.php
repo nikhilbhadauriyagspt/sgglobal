@@ -53,6 +53,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_settings'])) {
     $smtp_from_name   = trim($_POST['smtp_from_name'] ?? 'Skill Grow Institution');
     $smtp_mode        = trim($_POST['smtp_mode'] ?? 'test');
 
+    if ($smtp_port === 587 && $smtp_encryption === 'ssl') {
+        $smtp_encryption = 'tls';
+    } elseif ($smtp_port === 465 && $smtp_encryption === 'tls') {
+        $smtp_encryption = 'ssl';
+    }
+
     // 3. Razorpay
     $razorpay_key_id     = trim($_POST['razorpay_key_id'] ?? '');
     $razorpay_key_secret = trim($_POST['razorpay_key_secret'] ?? '');
@@ -125,7 +131,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_settings'])) {
 }
 
 // Fetch Current Settings
-$settings = getGlobalSettings();
+$settings = getGlobalSettings(true);
 ?>
 <!DOCTYPE html>
 <html lang="en">

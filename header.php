@@ -589,12 +589,6 @@ $currentScript = basename($_SERVER['PHP_SELF']);
           </div>
         </li>
         <li class="nav-item">
-          <a class="nav-link <?= ($currentScript === 'blogs.php') ? 'active' : '' ?>" href="blogs.php">Blogs</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link <?= ($currentScript === 'certificate.php') ? 'active' : '' ?>" href="certificate.php">Certificate</a>
-        </li>
-        <li class="nav-item">
           <a class="nav-link <?= in_array($currentScript, ['career.php', 'government-jobs.php', 'private-jobs.php']) ? 'active' : '' ?>" href="career.php">Career</a>
         </li>
         <li class="nav-item">
@@ -639,6 +633,14 @@ $currentScript = basename($_SERVER['PHP_SELF']);
               <div>
                 <div>My Profile & Edit Details</div>
                 <small class="text-secondary d-block" style="font-size: 0.7rem;">Personal info, password & photo</small>
+              </div>
+            </a>
+
+            <a class="dropdown-item" href="my-enrollments.php#tabStudentCertificates">
+              <i class="fas fa-award drop-ico text-warning"></i>
+              <div>
+                <div>My Official Certificates</div>
+                <small class="text-secondary d-block" style="font-size: 0.7rem;">Verified credentials & PDF print</small>
               </div>
             </a>
 

@@ -1,8 +1,24 @@
 <?php
 require_once __DIR__ . '/includes/settings_helper.php';
 $ftrSettings = getGlobalSettings();
-?>
-﻿ <footer class="footer-section">
+
+// Fetch dynamic active courses for footer
+$ftrCourses = [];
+if (!isset($pdo)) {
+    $dbPath = __DIR__ . '/admin/config/db.php';
+    if (file_exists($dbPath)) {
+        require_once $dbPath;
+    }
+}
+if (isset($pdo)) {
+    try {
+        $stmtFtr = $pdo->query("SELECT id, title, slug FROM courses WHERE status = 'active' ORDER BY id ASC LIMIT 7");
+        $ftrCourses = $stmtFtr->fetchAll();
+    } catch (Exception $e) {
+        $ftrCourses = [];
+    }
+}
+?><footer class="footer-section">
   <div class="container">
     <div class="footer-grid">
       <!-- Brand Section -->
@@ -38,115 +54,34 @@ $ftrSettings = getGlobalSettings();
           <li><a href="aboutus.php">About Us</a></li>
           <li><a href="explore-course.php">Courses</a></li>
           <li><a href="blogs.php">Blogs</a></li>
+          <li><a href="certificate.php">Certificate</a></li>
           <li><a href="private-jobs.php">Apply for Private Jobs</a></li>
           <li><a href="government-jobs.php">Apply for Government Jobs</a></li>
           <li><a href="contact.php">Contact</a></li>
         </ul>
       </div>
 
-      <!-- Our Courses -->
+      <!-- Our Courses (Dynamic Normal Links) -->
       <div class="footer-courses">
-  <h4 class="footer-heading">Our Courses</h4>
-  <div class="accordion" id="coursesAccordion">
-    <!-- Business & Management -->
-    <div class="accordion-item">
-      <h2 class="accordion-header" id="headingBusiness">
-        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseBusiness" aria-expanded="false" aria-controls="collapseBusiness">
-          Business & Management
-        </button>
-      </h2>
-      <div id="collapseBusiness" class="accordion-collapse collapse" aria-labelledby="headingBusiness" data-bs-parent="#coursesAccordion">
-        <div class="accordion-body">
-          <ul class="footer-nav">
+        <h4 class="footer-heading">Our Courses</h4>
+        <ul class="footer-nav">
+          <?php if (!empty($ftrCourses)): ?>
+            <?php foreach ($ftrCourses as $fc): ?>
+              <?php $cLink = !empty($fc['slug']) ? "course-detail.php?course=" . urlencode($fc['slug']) : "explore-course.php"; ?>
+              <li><a href="<?= $cLink ?>"><?= htmlspecialchars($fc['title']) ?></a></li>
+            <?php endforeach; ?>
+            <li><a href="explore-course.php" style="color: var(--primary-color); font-weight: 600;">View All Courses &rarr;</a></li>
+          <?php else: ?>
             <li><a href="explore-course.php">Business Studies</a></li>
-            <li><a href="course-detail.php?course=management-studies">Management Studies</a></li>
-            <li><a href="course-detail.php?course=banking-and-finance">Financial Markets and Product</a></li>
-            <li><a href="explore-course.php">Business Intelligence</a></li>
-          </ul>
-        </div>
+            <li><a href="explore-course.php">Advanced Management</a></li>
+            <li><a href="explore-course.php">Banking &amp; Financial Markets</a></li>
+            <li><a href="explore-course.php">Full Stack Web Engineering</a></li>
+            <li><a href="explore-course.php">Python &amp; Data Science</a></li>
+            <li><a href="explore-course.php">Digital Marketing &amp; Growth</a></li>
+            <li><a href="explore-course.php">Aviation &amp; Airport Ops</a></li>
+          <?php endif; ?>
+        </ul>
       </div>
-    </div>
-
-    <!-- Specialized Fields -->
-    <div class="accordion-item">
-      <h2 class="accordion-header" id="headingSpecialized">
-        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSpecialized" aria-expanded="false" aria-controls="collapseSpecialized">
-          Specialized Fields
-        </button>
-      </h2>
-      <div id="collapseSpecialized" class="accordion-collapse collapse" aria-labelledby="headingSpecialized" data-bs-parent="#coursesAccordion">
-        <div class="accordion-body">
-          <ul class="footer-nav">
-            <li><a href="explore-course.php">Aviation</a></li>
-            <li><a href="course-detail.php?course=tourism-and-hospitality">Tourism and Hospitality</a></li>
-            <li><a href="course-detail.php?course=journalism-and-mass-communication">Journalism and Mass Communication</a></li>
-            <li><a href="explore-course.php">Life Skills</a></li>
-            <li><a href="explore-course.php">General Studies</a></li>
-          </ul>
-        </div>
-      </div>
-    </div>
-
-    <!-- Technology & IT -->
-    <div class="accordion-item">
-      <h2 class="accordion-header" id="headingTech">
-        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTech" aria-expanded="false" aria-controls="collapseTech">
-          Technology & IT
-        </button>
-      </h2>
-      <div id="collapseTech" class="accordion-collapse collapse" aria-labelledby="headingTech" data-bs-parent="#coursesAccordion">
-        <div class="accordion-body">
-          <ul class="footer-nav">
-            <li><a href="course-detail.php?course=web-technology">Web Technology</a></li>
-            <li><a href="explore-course.php">Python Data Structures</a></li>
-            <li><a href="explore-course.php">Introduction to Robotic Programming</a></li>
-            <li><a href="explore-course.php">AI in Human Resource Management</a></li>
-            <li><a href="explore-course.php">Advance Digital Transformation</a></li>
-            <li><a href="explore-course.php">Advance Data Analytics</a></li>
-            <li><a href="explore-course.php">IT Automation</a></li>
-            <li><a href="course-detail.php?course=it-support">IT Support</a></li>
-          </ul>
-        </div>
-      </div>
-    </div>
-
-    <!-- Design & Creativity -->
-    <div class="accordion-item">
-      <h2 class="accordion-header" id="headingDesign">
-        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDesign" aria-expanded="false" aria-controls="collapseDesign">
-          Design & Creativity
-        </button>
-      </h2>
-      <div id="collapseDesign" class="accordion-collapse collapse" aria-labelledby="headingDesign" data-bs-parent="#coursesAccordion">
-        <div class="accordion-body">
-          <ul class="footer-nav">
-            <li><a href="explore-course.php">Design Study</a></li>
-            <li><a href="explore-course.php">Cosmetology Studies</a></li>
-            <li><a href="explore-course.php">3D Painting and Design for Educators</a></li>
-            <li><a href="explore-course.php">UX Design</a></li>
-          </ul>
-        </div>
-      </div>
-    </div>
-
-    <!-- Marketing -->
-    <div class="accordion-item">
-      <h2 class="accordion-header" id="headingMarketing">
-        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMarketing" aria-expanded="false" aria-controls="collapseMarketing">
-          Marketing
-        </button>
-      </h2>
-      <div id="collapseMarketing" class="accordion-collapse collapse" aria-labelledby="headingMarketing" data-bs-parent="#coursesAccordion">
-        <div class="accordion-body">
-          <ul class="footer-nav">
-            <li><a href="course-detail.php?course=digital-marketing-strategy">Digital Marketing Strategy</a></li>
-            <li><a href="course-detail.php?course=digital-marketing-ecommerce">Digital Marketing & E-commerce</a></li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
 
 
       <!-- Contact Info -->
@@ -208,17 +143,18 @@ $ftrSettings = getGlobalSettings();
     });
   });
 </script>
- <script>
-        const navbar = document.querySelector('.navbar');
+<script>
+  (function() {
+    const navbarEl = document.querySelector('.navbar');
+    if (!navbarEl) return;
 
-        window.addEventListener('scroll', function() {
-            let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-
-            // Add/remove 'scrolled' class based on scroll position
-            if (scrollTop > 50) { // Trigger after scrolling 50px
-                navbar.classList.add('scrolled');
-            } else {
-                navbar.classList.remove('scrolled');
-            }
-        });
-    </script>
+    window.addEventListener('scroll', function() {
+      let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      if (scrollTop > 50) {
+        navbarEl.classList.add('scrolled');
+      } else {
+        navbarEl.classList.remove('scrolled');
+      }
+    });
+  })();
+</script>

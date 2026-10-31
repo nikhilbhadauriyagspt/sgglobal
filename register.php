@@ -17,7 +17,61 @@ $smtpMode        = $sysSettings['smtp_mode'] ?? 'test';
 
 // Fetch active courses from database
 $selectedCourseParam = trim($_GET["course"] ?? ($_GET["course_id"] ?? ""));
-$dbCourses = $pdo->query("SELECT id, title, slug, duration FROM courses WHERE status = 'active' ORDER BY title ASC")->fetchAll();
+$dbCourses = $pdo->query("SELECT id, title, slug, duration, fee FROM courses WHERE status = 'active' ORDER BY title ASC")->fetchAll();
+
+// Determine initial selected course title
+$initialSelectedCourseTitle = 'Full Stack Web Technology';
+if (!empty($dbCourses)) {
+    $initialSelectedCourseTitle = $dbCourses[0]['title'];
+    foreach ($dbCourses as $dc) {
+        if (!empty($selectedCourseParam) && (
+            strtolower($selectedCourseParam) === strtolower($dc['slug'] ?? '') ||
+            (string)$selectedCourseParam === (string)$dc['id'] ||
+            strtolower($selectedCourseParam) === strtolower($dc['title'])
+        )) {
+            $initialSelectedCourseTitle = $dc['title'];
+            break;
+        }
+    }
+}
+
+// Check if student is already logged in for Direct Fast-Track Seat Booking
+$isLoggedIn      = !empty($_SESSION['student_logged_in']);
+$loggedStudentId = $_SESSION['student_id'] ?? '';
+$loggedName      = $_SESSION['student_name'] ?? '';
+$loggedEmail     = $_SESSION['student_email'] ?? '';
+$loggedPhone     = $_SESSION['student_phone'] ?? '';
+$loggedQual      = '12th Standard';
+$loggedAadhaar   = '';
+
+if ($isLoggedIn && (!empty($loggedEmail) || !empty($loggedStudentId))) {
+    try {
+        $stStmt = $pdo->prepare("SELECT * FROM students WHERE email = :em OR (student_id != '' AND student_id = :sid) ORDER BY id DESC LIMIT 1");
+        $stStmt->execute(['em' => $loggedEmail, 'sid' => $loggedStudentId]);
+        $stRow = $stStmt->fetch();
+        if ($stRow) {
+            $loggedStudentId = $stRow['student_id'] ?: $loggedStudentId;
+            $loggedName      = $stRow['full_name'] ?: $loggedName;
+            $loggedEmail     = $stRow['email'] ?: $loggedEmail;
+            $loggedPhone     = $stRow['phone'] ?: $loggedPhone;
+            $loggedQual      = $stRow['qualification'] ?: $loggedQual;
+            $loggedAadhaar   = $stRow['aadhaar_number'] ?: $loggedAadhaar;
+        }
+
+        $admStmt = $pdo->prepare("SELECT * FROM admissions WHERE email = :em OR (student_id != '' AND student_id = :sid) ORDER BY id DESC LIMIT 1");
+        $admStmt->execute(['em' => $loggedEmail, 'sid' => $loggedStudentId]);
+        $admRow = $admStmt->fetch();
+        if ($admRow) {
+            if (empty($loggedStudentId)) $loggedStudentId = $admRow['student_id'] ?? '';
+            if (empty($loggedName))      $loggedName      = $admRow['full_name'] ?? '';
+            if (empty($loggedEmail))     $loggedEmail     = $admRow['email'] ?? '';
+            if (empty($loggedPhone))     $loggedPhone     = $admRow['phone'] ?? '';
+            if (!empty($admRow['qualification']))  $loggedQual    = $admRow['qualification'];
+            if (!empty($admRow['aadhaar_number'])) $loggedAadhaar = $admRow['aadhaar_number'];
+        }
+        $loggedPhone = substr(preg_replace('/\D/', '', $loggedPhone), -10);
+    } catch (Exception $e) {}
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -608,21 +662,21 @@ $dbCourses = $pdo->query("SELECT id, title, slug, duration FROM courses WHERE st
 
           <div>
             <ul class="stepper-nav">
-              <li class="stepper-item active-step" id="navStep1">
+              <li class="stepper-item <?= $isLoggedIn ? 'completed-step' : 'active-step' ?>" id="navStep1">
                 <div class="stepper-icon-bubble">1</div>
                 <div class="stepper-content">
                   <h4>Personal & Email OTP</h4>
                   <p>Candidate details & verification</p>
                 </div>
               </li>
-              <li class="stepper-item" id="navStep2">
+              <li class="stepper-item <?= $isLoggedIn ? 'completed-step' : '' ?>" id="navStep2">
                 <div class="stepper-icon-bubble">2</div>
                 <div class="stepper-content">
                   <h4>Aadhaar & Documents</h4>
                   <p>Identity proof & qualification</p>
                 </div>
               </li>
-              <li class="stepper-item" id="navStep3">
+              <li class="stepper-item <?= $isLoggedIn ? 'active-step' : '' ?>" id="navStep3">
                 <div class="stepper-icon-bubble">3</div>
                 <div class="stepper-content">
                   <h4>Razorpay Checkout</h4>
@@ -652,7 +706,7 @@ $dbCourses = $pdo->query("SELECT id, title, slug, duration FROM courses WHERE st
           <form id="admissionMasterForm">
             
             <!-- ================= STEP 1: PERSONAL DETAILS & EMAIL OTP ================= -->
-            <div class="form-step-screen active" id="stepScreen1">
+            <div class="form-step-screen <?= !$isLoggedIn ? 'active' : '' ?>" id="stepScreen1">
               
               <div class="step-header-box">
                 <span class="step-badge"><i class="fas fa-user-edit me-1"></i> Step 1 of 3</span>
@@ -667,7 +721,7 @@ $dbCourses = $pdo->query("SELECT id, title, slug, duration FROM courses WHERE st
                     <label>Candidate Full Name <span>*</span></label>
                     <div class="input-icon-box">
                       <i class="fas fa-user"></i>
-                      <input type="text" class="form-control" id="candName" placeholder="As per official ID" required>
+                      <input type="text" class="form-control" id="candName" value="<?= htmlspecialchars($loggedName) ?>" placeholder="As per official ID" required>
                     </div>
                   </div>
                 </div>
@@ -689,8 +743,11 @@ $dbCourses = $pdo->query("SELECT id, title, slug, duration FROM courses WHERE st
                     <label>Phone / WhatsApp No. <span>*</span></label>
                     <div class="input-icon-box">
                       <i class="fas fa-phone"></i>
-                      <input type="tel" class="form-control" id="phone" placeholder="10-digit number" required>
+                      <input type="tel" class="form-control" id="phone" value="<?= htmlspecialchars($loggedPhone) ?>" placeholder="10-digit mobile number" maxlength="10" minlength="10" pattern="[0-9]{10}" inputmode="numeric" autocomplete="tel" required>
                     </div>
+                    <small id="phoneErrorHint" class="text-danger mt-1" style="display: none; font-size: 0.76rem; font-weight: 600;">
+                      <i class="fas fa-exclamation-circle me-1"></i> Phone number must be exactly 10 digits.
+                    </small>
                   </div>
                 </div>
 
@@ -700,7 +757,7 @@ $dbCourses = $pdo->query("SELECT id, title, slug, duration FROM courses WHERE st
                     <label>Select Course Program <span>*</span></label>
                     <div class="input-icon-box">
                       <i class="fas fa-graduation-cap"></i>
-                      <select class="form-select" id="course" required>
+                      <select class="form-select" id="course" onchange="syncCourseSelection(this.value)" required>
                         <?php if (!empty($dbCourses)): ?>
                           <?php 
                           $matchFound = false;
@@ -735,7 +792,7 @@ $dbCourses = $pdo->query("SELECT id, title, slug, duration FROM courses WHERE st
                   <div class="form-group-item">
                     <div class="d-flex justify-content-between align-items-center mb-1">
                       <label class="mb-0">Candidate Email Address <span>*</span></label>
-                      <span id="emailVerifiedBadge" class="badge bg-success" style="display: none;">
+                      <span id="emailVerifiedBadge" class="badge bg-success" style="display: <?= $isLoggedIn ? 'inline-block' : 'none' ?>;">
                         <i class="fas fa-check-circle me-1"></i> Email Verified
                       </span>
                     </div>
@@ -743,9 +800,9 @@ $dbCourses = $pdo->query("SELECT id, title, slug, duration FROM courses WHERE st
                     <div class="d-flex gap-2">
                       <div class="input-icon-box flex-grow-1">
                         <i class="fas fa-envelope"></i>
-                        <input type="email" class="form-control" id="email" placeholder="student@example.com" required>
+                        <input type="email" class="form-control" id="email" value="<?= htmlspecialchars($loggedEmail) ?>" placeholder="student@example.com" <?= $isLoggedIn ? 'readonly' : '' ?> required>
                       </div>
-                      <button type="button" class="btn-send-otp" id="btnSendOtp" onclick="triggerSendOtp()">
+                      <button type="button" class="btn-send-otp" id="btnSendOtp" onclick="triggerSendOtp()" style="display: <?= $isLoggedIn ? 'none' : 'inline-flex' ?>;">
                         <i class="fas fa-paper-plane me-1"></i> Send OTP
                       </button>
                     </div>
@@ -796,6 +853,36 @@ $dbCourses = $pdo->query("SELECT id, title, slug, duration FROM courses WHERE st
                   </div>
                 </div>
 
+                <!-- Create Student Portal Password -->
+                <div class="col-md-6" id="fieldPasswordWrap" style="<?= $isLoggedIn ? 'display:none;' : '' ?>">
+                  <div class="form-group-item">
+                    <label>Create Portal Password <span>*</span></label>
+                    <div class="input-icon-box position-relative">
+                      <i class="fas fa-lock"></i>
+                      <input type="password" class="form-control" id="portalPassword" placeholder="Min. 6 characters" autocomplete="new-password" style="padding-right: 40px;">
+                      <button type="button" class="btn btn-sm text-muted position-absolute end-0 top-50 translate-middle-y me-2 border-0 bg-transparent" onclick="toggleRegPassword('portalPassword', this)" tabindex="-1" style="z-index: 5;">
+                        <i class="fas fa-eye"></i>
+                      </button>
+                    </div>
+                    <small class="text-muted" style="font-size: 0.75rem;">Password to access your student portal dashboard.</small>
+                  </div>
+                </div>
+
+                <!-- Confirm Password -->
+                <div class="col-md-6" id="fieldConfirmPasswordWrap" style="<?= $isLoggedIn ? 'display:none;' : '' ?>">
+                  <div class="form-group-item">
+                    <label>Confirm Password <span>*</span></label>
+                    <div class="input-icon-box position-relative">
+                      <i class="fas fa-shield-alt"></i>
+                      <input type="password" class="form-control" id="confirmPassword" placeholder="Re-enter your password" autocomplete="new-password" style="padding-right: 40px;">
+                      <button type="button" class="btn btn-sm text-muted position-absolute end-0 top-50 translate-middle-y me-2 border-0 bg-transparent" onclick="toggleRegPassword('confirmPassword', this)" tabindex="-1" style="z-index: 5;">
+                        <i class="fas fa-eye"></i>
+                      </button>
+                    </div>
+                    <small id="regPassMatchHint" class="text-muted" style="font-size: 0.75rem;">Must match the portal password.</small>
+                  </div>
+                </div>
+
               </div>
 
               <!-- Step 1 Actions -->
@@ -825,7 +912,7 @@ $dbCourses = $pdo->query("SELECT id, title, slug, duration FROM courses WHERE st
                 <label>12-Digit Aadhaar Number <span>*</span></label>
                 <div class="input-icon-box">
                   <i class="fas fa-fingerprint"></i>
-                  <input type="text" class="form-control font-monospace" id="aadhaarNum" placeholder="XXXX - XXXX - XXXX" maxlength="19" required>
+                  <input type="text" class="form-control font-monospace" id="aadhaarNum" value="<?= htmlspecialchars($loggedAadhaar) ?>" placeholder="XXXX - XXXX - XXXX" maxlength="19" required>
                 </div>
                 <small class="text-muted" style="font-size: 0.75rem;">Government registered identity number is required for official certificate issuing.</small>
               </div>
@@ -879,32 +966,94 @@ $dbCourses = $pdo->query("SELECT id, title, slug, duration FROM courses WHERE st
 
 
             <!-- ================= STEP 3: MANDATORY RAZORPAY PAYMENT ================= -->
-            <div class="form-step-screen" id="stepScreen3">
+            <div class="form-step-screen <?= $isLoggedIn ? 'active' : '' ?>" id="stepScreen3">
               
               <div class="step-header-box">
-                <span class="step-badge"><i class="fas fa-credit-card me-1"></i> Step 3 of 3 (Mandatory)</span>
-                <h3>Admission Fee Checkout</h3>
-                <p>Payment is strictly required to confirm your student admission and batch allotment.</p>
+                <span class="step-badge">
+                  <i class="fas <?= $isLoggedIn ? 'fa-bolt' : 'fa-credit-card' ?> me-1"></i>
+                  <?= $isLoggedIn ? 'Direct Seat Booking Checkout (Logged-In Student)' : 'Step 3 of 3 (Mandatory)' ?>
+                </span>
+                <h3><?= $isLoggedIn ? 'Confirm Course & Pay Seat Booking Fee' : 'Admission Fee Checkout' ?></h3>
+                <p>
+                  <?= $isLoggedIn
+                      ? 'Aap pehle se logged-in hain! Neeche apni verified details aur course check karein aur seedha seat book karein.'
+                      : 'Payment is strictly required to confirm your student admission and batch allotment.' ?>
+                </p>
               </div>
+
+              <?php if ($isLoggedIn): ?>
+                <!-- Logged-In Student Verified Details & Course Selector Box -->
+                <div style="background: rgba(16, 185, 129, 0.07); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 14px; padding: 18px 20px; margin-bottom: 20px;">
+                  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3 pb-2" style="border-bottom: 1px solid rgba(255,255,255,0.08);">
+                    <div class="d-flex align-items-center gap-2">
+                      <span class="badge bg-success"><i class="fas fa-user-check me-1"></i> Verified Student Profile</span>
+                      <?php if (!empty($loggedStudentId)): ?>
+                        <span class="badge bg-dark border border-secondary font-monospace text-warning"><?= htmlspecialchars($loggedStudentId) ?></span>
+                      <?php endif; ?>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-light" style="font-size: 0.75rem; padding: 3px 10px; border-radius: 6px;" onclick="goToStep(1)">
+                      <i class="fas fa-pen me-1"></i> Edit Personal / Doc Details
+                    </button>
+                  </div>
+
+                  <div class="row g-2 mb-3" style="font-size: 0.86rem;">
+                    <div class="col-sm-6">
+                      <span class="text-muted d-block" style="font-size: 0.74rem;">Candidate Name</span>
+                      <strong class="text-white"><?= htmlspecialchars($loggedName) ?></strong>
+                    </div>
+                    <div class="col-sm-6">
+                      <span class="text-muted d-block" style="font-size: 0.74rem;">Registered Email</span>
+                      <strong class="text-white"><?= htmlspecialchars($loggedEmail) ?></strong>
+                    </div>
+                    <div class="col-sm-6">
+                      <span class="text-muted d-block" style="font-size: 0.74rem;">Phone / WhatsApp No.</span>
+                      <strong class="text-white font-monospace"><?= htmlspecialchars($loggedPhone) ?></strong>
+                    </div>
+                    <div class="col-sm-6">
+                      <span class="text-muted d-block" style="font-size: 0.74rem;">Qualification & ID</span>
+                      <strong class="text-success"><i class="fas fa-check-circle me-1"></i> <?= htmlspecialchars($loggedQual) ?> (KYC Linked)</strong>
+                    </div>
+                  </div>
+
+                  <!-- Direct Course Selector for Seat Booking -->
+                  <div class="pt-2" style="border-top: 1px dashed rgba(255,255,255,0.12);">
+                    <label class="form-label text-warning fw-bold mb-1" style="font-size: 0.82rem;">
+                      <i class="fas fa-graduation-cap me-1"></i> Course Program Jiske Liye Aap Seat Book Kar Rahe Hain:
+                    </label>
+                    <select class="form-select" id="step3CourseSelect" onchange="syncCourseSelection(this.value)" style="background: #070e24; color: #fff; border-color: #e6a910; font-weight: 600;">
+                      <?php foreach ($dbCourses as $dc): ?>
+                        <option value="<?= htmlspecialchars($dc['title']) ?>" <?= ($dc['title'] === $initialSelectedCourseTitle) ? 'selected' : '' ?>>
+                          <?= htmlspecialchars($dc['title']) ?> (<?= htmlspecialchars($dc['duration']) ?> — Tuition: ₹<?= number_format((float)($dc['fee'] ?? 14999), 0) ?>)
+                        </option>
+                      <?php endforeach; ?>
+                    </select>
+                  </div>
+                </div>
+              <?php endif; ?>
 
               <!-- Fee Breakdown -->
               <div class="fee-summary-table">
                 <div class="fee-row">
                   <span>Candidate Name:</span>
-                  <span id="summaryStudentName" style="color: #ffffff; font-weight: 700;">Candidate</span>
+                  <span id="summaryStudentName" style="color: #ffffff; font-weight: 700;"><?= htmlspecialchars($loggedName ?: 'Candidate') ?></span>
                 </div>
                 <div class="fee-row">
-                  <span>Enrolled Program:</span>
-                  <span id="summaryCourseName" style="color: #ffffff; font-weight: 700;">Full Stack Web Technology</span>
+                  <span>Selected Course Program:</span>
+                  <span id="summaryCourseName" style="color: #e6a910; font-weight: 700;"><?= htmlspecialchars($initialSelectedCourseTitle) ?></span>
                 </div>
                 <div class="fee-row">
-                  <span>Admission & Kit Fee:</span>
+                  <span>Seat Booking & Registration Fee:</span>
                   <span style="color: #ffffff;">₹<?= number_format($admissionFee, 2) ?></span>
                 </div>
                 <div class="fee-row">
-                  <span style="font-weight: 700; color: #ffffff;">Total Payable Amount:</span>
+                  <span style="font-weight: 700; color: #ffffff;">Total Payable Now:</span>
                   <span class="fee-amount">₹<?= number_format($admissionFee, 2) ?></span>
                 </div>
+              </div>
+
+              <div class="p-2 px-3 mb-3 rounded-3" style="background: rgba(230, 169, 16, 0.08); border-left: 3px solid #e6a910; font-size: 0.8rem; color: #cbd5e1;">
+                <i class="fas fa-info-circle text-warning me-1"></i>
+                Yeh <strong>₹<?= number_format($admissionFee, 0) ?></strong> seat booking amount aapke is course ki final enrollment tuition fee me se automatically <strong>minus (deduct)</strong> ho jayega.
               </div>
 
               <!-- Razorpay Secure Badge -->
@@ -913,7 +1062,7 @@ $dbCourses = $pdo->query("SELECT id, title, slug, duration FROM courses WHERE st
                   <i class="fas fa-shield-alt text-warning fa-lg"></i>
                   <div>
                     <span>Razorpay Secure Payment Gateway</span><br>
-                    <small class="text-muted" style="font-size: 0.75rem;">Supports UPI (GPay/PhonePe), Credit/Debit Cards, Net Banking & Wallets</small>
+                    <small  style="font-size: 0.75rem;">Supports UPI (GPay/PhonePe), Credit/Debit Cards, Net Banking & Wallets</small>
                   </div>
                 </div>
                 <span class="badge bg-warning text-dark font-weight-bold">256-Bit SSL</span>
@@ -921,11 +1070,17 @@ $dbCourses = $pdo->query("SELECT id, title, slug, duration FROM courses WHERE st
 
               <!-- Step 3 Actions -->
               <div class="step-actions">
-                <button type="button" class="btn-step-prev" onclick="goToStep(2)">
-                  <i class="fas fa-arrow-left"></i> Back to Documents
-                </button>
+                <?php if ($isLoggedIn): ?>
+                  <a href="my-enrollments.php" class="btn-step-prev" style="text-decoration: none;">
+                    <i class="fas fa-arrow-left"></i> My Dashboard
+                  </a>
+                <?php else: ?>
+                  <button type="button" class="btn-step-prev" onclick="goToStep(2)">
+                    <i class="fas fa-arrow-left"></i> Back to Documents
+                  </button>
+                <?php endif; ?>
                 <button type="button" class="btn-step-next" id="btnPayRazorpay" onclick="initiateRazorpayPayment()">
-                  <i class="fas fa-lock"></i> Pay ₹<?= number_format($admissionFee, 0) ?> via Razorpay
+                  <i class="fas fa-lock"></i> Pay ₹<?= number_format($admissionFee, 0) ?> & Book Seat
                 </button>
               </div>
 
@@ -975,8 +1130,8 @@ $dbCourses = $pdo->query("SELECT id, title, slug, duration FROM courses WHERE st
                   <a id="downloadSlipBtn" href="download-receipt.php" target="_blank" class="btn-step-next" style="text-decoration: none;">
                     <i class="fas fa-file-pdf me-1"></i> Download Admission Slip (PDF)
                   </a>
-                  <a href="index.php" class="btn-step-prev" style="text-decoration: none;">
-                    <i class="fas fa-home me-1"></i> Return to Homepage
+                  <a href="my-enrollments.php" class="btn-step-prev" style="text-decoration: none; border-color: #e6a910; color: #e6a910;">
+                    <i class="fas fa-graduation-cap me-1"></i> Go to My Enrollments
                   </a>
                 </div>
 
@@ -999,12 +1154,75 @@ $dbCourses = $pdo->query("SELECT id, title, slug, duration FROM courses WHERE st
     const ADMISSION_FEE   = <?= (float)$admissionFee ?>;
     const SMTP_MODE       = '<?= htmlspecialchars($smtpMode) ?>';
 
-    let isEmailVerified = false;
+    let isEmailVerified = <?= $isLoggedIn ? 'true' : 'false' ?>;
+
+    // Sync course dropdowns between Step 1 and Step 3 Fast-Track
+    function syncCourseSelection(courseTitle) {
+      const step1Select = document.getElementById('course');
+      const step3Select = document.getElementById('step3CourseSelect');
+      const summaryCourse = document.getElementById('summaryCourseName');
+
+      if (step1Select && step1Select.value !== courseTitle) {
+        step1Select.value = courseTitle;
+      }
+      if (step3Select && step3Select.value !== courseTitle) {
+        step3Select.value = courseTitle;
+      }
+      if (summaryCourse) {
+        summaryCourse.textContent = courseTitle;
+      }
+    }
+
+    // Strict 10-digit numeric validation for Phone / WhatsApp No.
+    const phoneInputEl = document.getElementById('phone');
+    const phoneErrorHint = document.getElementById('phoneErrorHint');
+    if (phoneInputEl) {
+      phoneInputEl.addEventListener('input', function() {
+        const digitsOnly = this.value.replace(/\D/g, '').slice(0, 10);
+        if (this.value !== digitsOnly) {
+          this.value = digitsOnly;
+        }
+        if (digitsOnly.length > 0 && digitsOnly.length < 10) {
+          if (phoneErrorHint) phoneErrorHint.style.display = 'block';
+          this.style.borderColor = '#ef4444';
+        } else if (digitsOnly.length === 10) {
+          if (phoneErrorHint) phoneErrorHint.style.display = 'none';
+          this.style.borderColor = '#10b981';
+        } else {
+          if (phoneErrorHint) phoneErrorHint.style.display = 'none';
+          this.style.borderColor = '';
+        }
+      });
+
+      phoneInputEl.addEventListener('blur', function() {
+        const digitsOnly = this.value.replace(/\D/g, '');
+        if (digitsOnly.length > 0 && digitsOnly.length !== 10) {
+          if (phoneErrorHint) phoneErrorHint.style.display = 'block';
+          this.style.borderColor = '#ef4444';
+        }
+      });
+    }
+
+    // Strict 6-digit numeric filter for OTP input
+    const otpInputEl = document.getElementById('inputOtpCode');
+    if (otpInputEl) {
+      otpInputEl.addEventListener('input', function() {
+        this.value = this.value.replace(/\D/g, '').slice(0, 6);
+      });
+    }
 
     // Trigger Send OTP via AJAX
     function triggerSendOtp() {
+      const phone = document.getElementById('phone').value.replace(/\D/g, '');
       const email = document.getElementById('email').value.trim();
       const name = document.getElementById('candName').value.trim() || 'Student Candidate';
+
+      if (phone.length !== 10) {
+        if (phoneErrorHint) phoneErrorHint.style.display = 'block';
+        alert('Please enter a valid 10-digit Phone / WhatsApp number first.');
+        document.getElementById('phone').focus();
+        return;
+      }
 
       if (!email || !email.includes('@')) {
         alert('Please enter a valid email address first.');
@@ -1031,16 +1249,22 @@ $dbCourses = $pdo->query("SELECT id, title, slug, duration FROM courses WHERE st
 
         const box = document.getElementById('otpVerifyBox');
         const notice = document.getElementById('otpStatusNotice');
-        box.style.display = 'block';
+        const otpInput = document.getElementById('inputOtpCode');
 
         if (data.status === 'success') {
-          if (data.mode === 'test' || data.mode === 'fallback') {
+          box.style.display = 'block';
+          if (data.mode === 'test' && data.demo_otp) {
+            notice.className = 'text-warning';
             notice.textContent = 'Test Mode: Use Code ' + data.demo_otp;
-            document.getElementById('inputOtpCode').value = data.demo_otp;
+            otpInput.value = data.demo_otp;
           } else {
-            notice.textContent = 'Code dispatched to your inbox!';
+            notice.className = 'text-success fw-semibold';
+            notice.innerHTML = '<i class="fas fa-check-circle me-1"></i> OTP sent to ' + email;
+            otpInput.value = '';
+            otpInput.focus();
           }
         } else {
+          box.style.display = 'none';
           alert('Error: ' + data.message);
         }
       })
@@ -1096,10 +1320,32 @@ $dbCourses = $pdo->query("SELECT id, title, slug, duration FROM courses WHERE st
       });
     }
 
+    // Show / Hide Password
+    function toggleRegPassword(fieldId, btn) {
+      const inp = document.getElementById(fieldId);
+      if (!inp) return;
+      const icon = btn.querySelector('i');
+      if (inp.type === 'password') {
+        inp.type = 'text';
+        if (icon) {
+          icon.classList.remove('fa-eye');
+          icon.classList.add('fa-eye-slash');
+          btn.classList.add('text-warning');
+        }
+      } else {
+        inp.type = 'password';
+        if (icon) {
+          icon.classList.remove('fa-eye-slash');
+          icon.classList.add('fa-eye');
+          btn.classList.remove('text-warning');
+        }
+      }
+    }
+
     // Validate Step 1
     function validateStep1AndProceed() {
       const name = document.getElementById('candName').value.trim();
-      const phone = document.getElementById('phone').value.trim();
+      const phone = document.getElementById('phone').value.replace(/\D/g, '');
       const email = document.getElementById('email').value.trim();
 
       if (!name || !phone || !email) {
@@ -1107,10 +1353,35 @@ $dbCourses = $pdo->query("SELECT id, title, slug, duration FROM courses WHERE st
         return;
       }
 
+      if (phone.length !== 10) {
+        if (phoneErrorHint) phoneErrorHint.style.display = 'block';
+        alert('Phone / WhatsApp No. must be exactly 10 digits.');
+        document.getElementById('phone').focus();
+        return;
+      }
+
       if (!isEmailVerified) {
         alert('Email verification is required! Please click "Send OTP" to verify your email address.');
         document.getElementById('email').focus();
         return;
+      }
+
+      // Validate password if field is active/visible
+      const passEl = document.getElementById('portalPassword');
+      const confEl = document.getElementById('confirmPassword');
+      if (passEl && passEl.offsetParent !== null) {
+        const passVal = passEl.value;
+        const confVal = confEl ? confEl.value : '';
+        if (!passVal || passVal.length < 6) {
+          alert('Please create a secure portal password (at least 6 characters).');
+          passEl.focus();
+          return;
+        }
+        if (passVal !== confVal) {
+          alert('Passwords do not match. Please verify your confirm password.');
+          if (confEl) confEl.focus();
+          return;
+        }
       }
 
       goToStep(2);
@@ -1247,6 +1518,11 @@ $dbCourses = $pdo->query("SELECT id, title, slug, duration FROM courses WHERE st
       payload.append('razorpay_payment_id', paymentId);
       payload.append('razorpay_order_id', orderId);
       payload.append('payment_method', paymentMethod);
+
+      const passField = document.getElementById('portalPassword');
+      if (passField && passField.value) {
+        payload.append('password', passField.value);
+      }
 
       // Attach student uploaded files to store in dedicated folder
       const fileAadhaar = document.getElementById('fileAadhaar');

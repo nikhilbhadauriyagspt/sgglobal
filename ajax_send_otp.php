@@ -42,14 +42,12 @@ if ($dispatch['mode'] === 'test') {
     echo json_encode([
         'status'  => 'success',
         'mode'    => 'live',
-        'message' => "Verification code has been dispatched to {$email}"
+        'message' => "Verification code has been sent to {$email}"
     ]);
 } else {
-    // If SMTP fails in live mode, provide fallback test OTP so testing isn't blocked
     echo json_encode([
-        'status'   => 'success',
-        'mode'     => 'fallback',
-        'demo_otp' => $otp,
-        'message'  => "SMTP notice: {$dispatch['message']}. Fallback Code: {$otp}"
+        'status'  => 'error',
+        'mode'    => 'live_error',
+        'message' => "Failed to send OTP email: {$dispatch['message']}"
     ]);
 }

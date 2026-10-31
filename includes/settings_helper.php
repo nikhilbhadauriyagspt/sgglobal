@@ -1,9 +1,9 @@
 <?php
 // Central Global Settings Helper for Skill Grow Institution
 if (!function_exists('getGlobalSettings')) {
-    function getGlobalSettings() {
+    function getGlobalSettings($forceRefresh = false) {
         static $cachedSettings = null;
-        if ($cachedSettings !== null) {
+        if ($cachedSettings !== null && !$forceRefresh) {
             return $cachedSettings;
         }
 

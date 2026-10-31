@@ -2,6 +2,12 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+require_once __DIR__ . '/includes/db.php';
+require_once __DIR__ . '/includes/testimonials_helper.php';
+
+ensureTestimonialsTable($pdo);
+$testiStmt = $pdo->query("SELECT * FROM testimonials WHERE status = 'active' ORDER BY id ASC LIMIT 6");
+$aboutTestimonials = $testiStmt->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -26,11 +32,27 @@ if (session_status() === PHP_SESSION_NONE) {
   <!-- Custom CSS -->
   <link rel="stylesheet" href="assets/css/style.css">
   <style>
+    /* Global Section Stylings */
+    .sgi-about-eyebrow {
+      display: inline-block;
+      padding: 6px 18px;
+      border-radius: 50px;
+      background: rgba(230, 169, 16, 0.14);
+      border: 1px solid rgba(230, 169, 16, 0.4);
+      color: var(--primary-color);
+      font-family: "Roboto Slab", serif;
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
     /* Banner Section */
     .about-banner {
-      background: url('assets/images/banner/skill-aboutbg.jpg') no-repeat right/cover;
+      background: url('assets/images/banner/skill-aboutbg.jpg') no-repeat center/cover;
       position: relative;
-      padding: 240px 0 200px;
+      padding: 210px 0 120px;
       text-align: center;
       color: #fff;
     }
@@ -41,449 +63,461 @@ if (session_status() === PHP_SESSION_NONE) {
       left: 0;
       width: 100%;
       height: 100%;
-      background: #0023659f;
+      background: rgba(0, 12, 39, 0.85);
     }
     .about-banner .container {
       position: relative;
+      z-index: 2;
     }
     .about-banner h1 {
       font-family: 'Roboto Slab', serif;
-      font-size: 3rem;
+      font-size: clamp(2.2rem, 4vw, 3.2rem);
       font-weight: 700;
-      margin-bottom: 20px;
+      margin-bottom: 14px;
     }
     .about-banner .breadcrumb {
       justify-content: center;
       background: transparent;
       padding: 0;
+      margin: 0;
     }
     .about-banner .breadcrumb-item a {
-      color: #e6a910; /* --primary-color */
+      color: var(--primary-color);
       text-decoration: none;
-    }
-    .about-banner .breadcrumb-item a:hover {
-      text-decoration: underline;
+      font-weight: 500;
     }
     .about-banner .breadcrumb-item {
-      color: #fff;
+      color: rgba(255, 255, 255, 0.75);
       font-family: 'Roboto', sans-serif;
-      font-size: 1rem;
+      font-size: 0.95rem;
     }
     .about-banner .breadcrumb-item + .breadcrumb-item::before {
-      color: #fff;
+      color: rgba(255, 255, 255, 0.4);
     }
-.about-content-section {
-      padding: 80px 0;
-      background-color: #fff;
+
+    /* About Content Section */
+    .about-content-section {
+      padding: 85px 0;
+      background-color: #000c27;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     }
     .about-content-section h2 {
       font-family: 'Roboto Slab', serif;
-      font-size: 2.5rem;
-      color: #002365;
+      font-size: clamp(1.9rem, 3.2vw, 2.5rem);
+      color: #ffffff;
       font-weight: 700;
       margin-bottom: 20px;
+      line-height: 1.3;
     }
     .about-content-section p {
       font-family: 'Roboto', sans-serif;
-      font-size: 1.1rem;
-      color: #6c757d;
-      line-height: 1.6;
-      margin-bottom: 20px;
+      font-size: 1rem;
+      color: rgba(255, 255, 255, 0.78);
+      line-height: 1.75;
+      margin-bottom: 25px;
     }
-    .about-images {
+    .about-images-mosaic {
       position: relative;
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      grid-template-rows: repeat(12, 1fr);
+      min-height: 380px;
+      gap: 15px;
+    }
+    .mosaic-img-1 {
+      grid-column: 1 / 9;
+      grid-row: 1 / 10;
+      width: 100%;
       height: 100%;
-      min-height: 400px;
-    }
-    .about-image {
-      position: absolute;
-      width: 250px;
-      height: 180px;
       object-fit: cover;
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-      border: 2px solid #002365;
-      transition: transform 0.3s ease;
+      border-radius: 14px;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-top: 3px solid var(--primary-color);
     }
-    .about-image:hover {
-      transform: scale(1.05);
+    .mosaic-img-2 {
+      grid-column: 7 / 13;
+      grid-row: 5 / 13;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 14px;
+      border: 3px solid #000c27;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     }
-    .about-image:nth-child(1) {
-      top: 0;
-      left: 0;
-      transform: rotate(-5deg);
-      z-index: 3;
-    }
-    .about-image:nth-child(2) {
-      top: 100px;
-      left: 150px;
-      transform: rotate(5deg);
-      z-index: 2;
-    }
-    .about-image:nth-child(3) {
-      top: 220px;
-      left: 50px;
-      transform: rotate(0deg);
-      z-index: 1;
-    }
+
     /* Mission & Vision Section */
     .mission-vision-section {
       padding: 80px 0;
-      background-color: #f8f9fa;
+      background-color: #0f1537;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     }
     .mission-vision-section h2 {
       font-family: 'Roboto Slab', serif;
-      font-size: 2.5rem;
-      color: #002365;
+      font-size: clamp(1.9rem, 3vw, 2.4rem);
+      color: #ffffff;
       font-weight: 700;
       text-align: center;
-      margin-bottom: 40px;
+      margin-bottom: 45px;
     }
     .mission-vision-card {
-      padding: 30px;
-      background-color: #fff;
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 36px 30px;
+      background-color: #000c27;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-top: 3px solid var(--primary-color);
+      border-radius: 14px;
       height: 100%;
-      transition: transform 0.3s ease;
+      transition: transform 0.3s ease, border-color 0.3s ease;
     }
     .mission-vision-card:hover {
-      transform: translateY(-10px);
+      transform: translateY(-6px);
+      border-color: var(--primary-color);
+    }
+    .mv-icon-box {
+      width: 52px;
+      height: 52px;
+      border-radius: 12px;
+      background: rgba(230, 169, 16, 0.14);
+      border: 1px solid rgba(230, 169, 16, 0.35);
+      color: var(--primary-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      margin-bottom: 20px;
     }
     .mission-vision-card h3 {
       font-family: 'Roboto Slab', serif;
-      font-size: 1.8rem;
-      color: #002365;
-      font-weight: 600;
+      font-size: 1.45rem;
+      color: #ffffff;
+      font-weight: 700;
       margin-bottom: 15px;
     }
     .mission-vision-card p {
       font-family: 'Roboto', sans-serif;
-      font-size: 1rem;
-      color: #6c757d;
-      line-height: 1.6;
+      font-size: 0.95rem;
+      color: rgba(255, 255, 255, 0.75);
+      line-height: 1.7;
+      margin: 0;
     }
 
-    /* History Section */
+    /* History / Journey Section */
     .history-section {
       padding: 80px 0;
-      background-color: #fff;
+      background-color: #000c27;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     }
     .history-section h2 {
       font-family: 'Roboto Slab', serif;
-      font-size: 2.5rem;
-      color: #002365;
+      font-size: clamp(1.9rem, 3vw, 2.4rem);
+      color: #ffffff;
       font-weight: 700;
       text-align: center;
-      margin-bottom: 40px;
+      margin-bottom: 30px;
+    }
+    .history-card {
+      background: #0f1537;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 36px 32px;
+      max-width: 900px;
+      margin: 0 auto;
     }
     .history-content p {
       font-family: 'Roboto', sans-serif;
-      font-size: 1.1rem;
-      color: #6c757d;
-      line-height: 1.6;
-      margin-bottom: 20px;
-      text-align: center;
+      font-size: 1rem;
+      color: rgba(255, 255, 255, 0.8);
+      line-height: 1.8;
+      margin-bottom: 18px;
+    }
+    .history-content p:last-child {
+      margin-bottom: 0;
     }
 
     /* Values Section */
     .values-section {
       padding: 80px 0;
-      background-color: #f8f9fa;
+      background-color: #0f1537;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     }
     .values-section h2 {
       font-family: 'Roboto Slab', serif;
-      font-size: 2.5rem;
-      color: #002365;
+      font-size: clamp(1.9rem, 3vw, 2.4rem);
+      color: #ffffff;
       font-weight: 700;
       text-align: center;
-      margin-bottom: 40px;
+      margin-bottom: 45px;
     }
     .value-card {
-      padding: 20px;
+      padding: 32px 24px;
       text-align: center;
-      background-color: #fff;
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      transition: transform 0.3s ease;
+      background-color: #000c27;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-top: 3px solid var(--primary-color);
+      border-radius: 14px;
+      height: 100%;
+      transition: transform 0.3s ease, border-color 0.3s ease;
     }
     .value-card:hover {
-      transform: translateY(-10px);
+      transform: translateY(-6px);
+      border-color: var(--primary-color);
     }
-    .value-card i {
-      font-size: 2.5rem;
-      color: #e6a910; /* --primary-color */
-      margin-bottom: 15px;
+    .value-icon-box {
+      width: 60px;
+      height: 60px;
+      border-radius: 14px;
+      background: rgba(230, 169, 16, 0.14);
+      border: 1px solid rgba(230, 169, 16, 0.35);
+      color: var(--primary-color);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 20px;
     }
     .value-card h4 {
       font-family: 'Roboto Slab', serif;
-      font-size: 1.5rem;
-      color: #002365;
-      font-weight: 600;
-      margin-bottom: 10px;
+      font-size: 1.3rem;
+      color: #ffffff;
+      font-weight: 700;
+      margin-bottom: 12px;
     }
     .value-card p {
       font-family: 'Roboto', sans-serif;
-      font-size: 1rem;
-      color: #6c757d;
+      font-size: 0.94rem;
+      color: rgba(255, 255, 255, 0.72);
+      line-height: 1.65;
+      margin: 0;
     }
 
     /* Team Section */
     .team-section {
       padding: 80px 0;
-      background-color: #fff;
+      background-color: #000c27;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     }
     .team-section h2 {
       font-family: 'Roboto Slab', serif;
-      font-size: 2.5rem;
-      color: #002365;
+      font-size: clamp(1.9rem, 3vw, 2.4rem);
+      color: #ffffff;
       font-weight: 700;
       text-align: center;
-      margin-bottom: 40px;
+      margin-bottom: 45px;
     }
     .team-card {
       text-align: center;
-      padding: 20px;
-      background-color: #f8f9fa;
-      border-radius: 10px;
-      transition: transform 0.3s ease;
+      padding: 30px 22px;
+      background-color: #0f1537;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      height: 100%;
+      transition: transform 0.3s ease, border-color 0.3s ease;
     }
     .team-card:hover {
-      transform: translateY(-10px);
+      transform: translateY(-6px);
+      border-color: var(--primary-color);
     }
     .team-card img {
-      width: 150px;
-      height: 150px;
+      width: 120px;
+      height: 120px;
       border-radius: 50%;
-      margin-bottom: 15px;
+      margin-bottom: 18px;
       object-fit: cover;
+      border: 3px solid var(--primary-color);
+      padding: 3px;
+      background: #000c27;
     }
     .team-card h4 {
       font-family: 'Roboto Slab', serif;
-      font-size: 1.3rem;
-      color: #002365;
+      font-size: 1.25rem;
+      color: #ffffff;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .team-card .team-role {
+      font-family: 'Roboto Slab', serif;
+      font-size: 0.88rem;
       font-weight: 600;
-      margin-bottom: 5px;
+      color: var(--primary-color);
+      margin-bottom: 12px;
+      display: block;
     }
     .team-card p {
       font-family: 'Roboto', sans-serif;
-      font-size: 1rem;
-      color: #6c757d;
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.72);
+      line-height: 1.6;
+      margin: 0;
     }
 
     /* Testimonials Section */
     .testimonials-section {
       padding: 80px 0;
-      background-color: #002365; /* --secondary-color */
-      color: #fff;
+      background-color: #0f1537;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     }
     .testimonials-section h2 {
       font-family: 'Roboto Slab', serif;
-      font-size: 2.5rem;
+      font-size: clamp(1.9rem, 3vw, 2.4rem);
       font-weight: 700;
       text-align: center;
-      margin-bottom: 40px;
+      color: #ffffff;
+      margin-bottom: 45px;
     }
     .testimonial-card {
-      padding: 20px;
-      background-color: rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-      text-align: center;
+      padding: 28px 24px;
+      background-color: #000c27;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      text-align: left;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
       transition: transform 0.3s ease;
     }
     .testimonial-card:hover {
-      transform: translateY(-10px);
+      transform: translateY(-6px);
+      border-color: rgba(230, 169, 16, 0.4);
+    }
+    .testi-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 16px;
     }
     .testimonial-card img {
-      width: 80px;
-      height: 80px;
+      width: 55px;
+      height: 55px;
       border-radius: 50%;
-      margin-bottom: 15px;
       object-fit: cover;
+      border: 2px solid var(--primary-color);
+      flex-shrink: 0;
+    }
+    .testi-header h5 {
+      font-family: 'Roboto Slab', serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin: 0 0 2px;
+    }
+    .testi-header span {
+      font-size: 0.8rem;
+      color: var(--primary-color);
+      display: block;
     }
     .testimonial-card p {
       font-family: 'Roboto', sans-serif;
-      font-size: 1rem;
-      font-style: italic;
-      margin-bottom: 15px;
-    }
-    .testimonial-card h5 {
-      font-family: 'Roboto Slab', serif;
-      font-size: 1.2rem;
-      font-weight: 500;
-      color: #e6a910; /* --primary-color */
+      font-size: 0.92rem;
+      color: rgba(255, 255, 255, 0.75);
+      line-height: 1.65;
+      margin: 0;
+      flex-grow: 1;
     }
 
     /* Achievements Section */
     .achievements-section {
       padding: 80px 0;
-      background-color: #fff;
-      text-align: center;
+      background-color: #000c27;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     }
     .achievements-section h2 {
       font-family: 'Roboto Slab', serif;
-      font-size: 2.5rem;
-      color: #002365;
+      font-size: clamp(1.9rem, 3vw, 2.4rem);
+      color: #ffffff;
       font-weight: 700;
-      margin-bottom: 40px;
+      text-align: center;
+      margin-bottom: 45px;
+    }
+    .achievement-card {
+      padding: 30px 20px;
+      background: #0f1537;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      text-align: center;
+      height: 100%;
+      transition: transform 0.3s ease;
+    }
+    .achievement-card:hover {
+      transform: translateY(-6px);
+      border-color: var(--primary-color);
     }
     .achievement-card i {
-      font-size: 2.5rem;
-      color: #e6a910; /* --primary-color */
-      margin-bottom: 15px;
+      font-size: 2.2rem;
+      color: var(--primary-color);
+      margin-bottom: 14px;
     }
     .achievement-card h3 {
       font-family: 'Roboto Slab', serif;
-      font-size: 2rem;
-      color: #002365;
-      font-weight: 700;
+      font-size: 2.4rem;
+      color: #ffffff;
+      font-weight: 800;
+      margin-bottom: 6px;
     }
     .achievement-card p {
       font-family: 'Roboto', sans-serif;
-      font-size: 1rem;
-      color: #6c757d;
+      font-size: 0.95rem;
+      color: rgba(255, 255, 255, 0.72);
+      margin: 0;
     }
 
     /* Partnerships Section */
     .partnerships-section {
-      padding: 80px 0;
-      background-color: #f8f9fa;
+      padding: 70px 0;
+      background-color: #0f1537;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     }
     .partnerships-section h2 {
       font-family: 'Roboto Slab', serif;
-      font-size: 2.5rem;
-      color: #002365;
+      font-size: clamp(1.9rem, 3vw, 2.4rem);
+      color: #ffffff;
       font-weight: 700;
       text-align: center;
       margin-bottom: 40px;
     }
-    .partner-logo img {
-      max-width: 150px;
-      filter: grayscale(100%);
-      transition: filter 0.3s ease;
+    .partner-pill {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 65px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
-    .partner-logo img:hover {
-      filter: grayscale(0%);
+    .partner-pill img {
+      max-height: 40px;
+      width: auto;
+      max-width: 100%;
+      object-fit: contain;
     }
 
     /* CTA Section */
     .cta-section {
-      padding: 60px 0;
-      background-color: #e6a910; /* --primary-color */
+      padding: 70px 0;
+      background: linear-gradient(135deg, #001238 0%, #002365 100%);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
       text-align: center;
     }
     .cta-section h2 {
       font-family: 'Roboto Slab', serif;
-      font-size: 2.5rem;
-      color: #fff;
+      font-size: clamp(2rem, 3.5vw, 2.75rem);
+      color: #ffffff;
       font-weight: 700;
-      margin-bottom: 20px;
+      margin-bottom: 14px;
     }
     .cta-section p {
       font-family: 'Roboto', sans-serif;
-      font-size: 1.2rem;
-      color: #fff;
-      margin-bottom: 30px;
+      font-size: 1.05rem;
+      color: rgba(255, 255, 255, 0.8);
+      max-width: 680px;
+      margin: 0 auto 30px;
+      line-height: 1.7;
     }
-.cta-section .enroll-btn{
-    background: #002365;
-}
-    /* Responsive Adjustments */
+
     @media (max-width: 768px) {
-      .about-banner {
-        padding: 160px 0 30px;
-    }
-      .about-banner h1 {
-        font-size: 2rem;
-      }
-      .about-banner .breadcrumb-item {
-        font-size: 0.9rem;
-      }
-      .about-content-section {
-        padding: 60px 0;
-      }
-      .about-content-section h2 {
-        font-size: 2rem;
-      }
-      .about-content-section p {
-        font-size: 1rem;
-      }
-      .about-images {
-        min-height: 300px;
+      .about-images-mosaic {
+        min-height: 280px;
         margin-top: 30px;
-      }
-      .about-image {
-        width: 200px;
-        height: 140px;
-      }
-      .about-image:nth-child(1) {
-        top: 0;
-        left: 20px;
-      }
-      .about-image:nth-child(2) {
-        top: 80px;
-        left: 120px;
-      }
-      .about-image:nth-child(3) {
-        top: 160px;
-        left: 50px;
-      }
-      .mission-vision-section,
-      .history-section,
-      .values-section,
-      .team-section,
-      .testimonials-section,
-      .achievements-section,
-      .partnerships-section,
-      .cta-section {
-        padding: 60px 0;
-      }
-      .mission-vision-section h2,
-      .history-section h2,
-      .values-section h2,
-      .team-section h2,
-      .testimonials-section h2,
-      .achievements-section h2,
-      .partnerships-section h2,
-      .cta-section h2 {
-        font-size: 2rem;
-      }
-      .mission-vision-card h3 {
-        font-size: 1.5rem;
-      }
-      .mission-vision-card p,
-      .history-content p,
-      .value-card p,
-      .team-card p,
-      .testimonial-card p,
-      .achievement-card p {
-        font-size: 0.9rem;
-      }
-      .value-card h4 {
-        font-size: 1.3rem;
-      }
-      .team-card img {
-        width: 120px;
-        height: 120px;
-      }
-      .team-card h4 {
-        font-size: 1.2rem;
-      }
-      .testimonial-card img {
-        width: 60px;
-        height: 60px;
-      }
-      .testimonial-card h5 {
-        font-size: 1rem;
-      }
-      .achievement-card h3 {
-        font-size: 1.5rem;
-      }
-      .partner-logo img {
-        max-width: 120px;
-      }
-      .cta-section p {
-        font-size: 1rem;
       }
     }
   </style>
@@ -496,6 +530,7 @@ if (session_status() === PHP_SESSION_NONE) {
   <!-- About Us Banner -->
   <section class="about-banner">
     <div class="container">
+      <span class="sgi-about-eyebrow">Discover Our Institution</span>
       <h1>About Skill Grow Institution</h1>
       <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
@@ -505,53 +540,70 @@ if (session_status() === PHP_SESSION_NONE) {
       </nav>
     </div>
   </section>
-<!-- New About Content Section -->
+
+  <!-- About Content Section -->
   <section class="about-content-section">
     <div class="container">
-      <div class="row align-items-center">
-        <div class="col-md-6">
-          <h2>About Skill Grow Institution</h2>
-          <p>Skill Grow Institution is dedicated to empowering individuals with practical, industry-relevant skills in Business, Technology, Design, and more. Since our founding in 2018, we’ve grown into a global platform, serving over 10,000 learners across 100+ countries. Our commitment to accessible, high-quality education drives us to create innovative learning experiences that bridge the gap between ambition and achievement.</p>
-          <a href="#courses" class="enroll-btn">Explore Our Courses</a>
+      <div class="row align-items-center g-4">
+        <div class="col-lg-6">
+          <span class="sgi-about-eyebrow">Excellence In Learning</span>
+          <h2>Empowering Ambition with Industry-Ready Skills</h2>
+          <p>Skill Grow Institution is dedicated to empowering individuals with practical, industry-relevant skills across Business, Technology, Design, Aviation, and more. We focus on bridging the gap between academic theory and real-world execution through hands-on mentors and verified curricula.</p>
+          <p>Whether you are starting out or upgrading for your dream career, our flexible programs provide the guidance, real-world case studies, and official certifications needed to thrive.</p>
+          <a href="explore-course.php" class="enroll-btn d-inline-block"><i class="fas fa-book-open me-2"></i>Explore Our Courses</a>
         </div>
-        <div class="col-md-6">
-          <div class="about-images">
-            <img src="assets/images/about/classroom.jpg" alt="Classroom" class="about-image">
-            <img src="assets/images/about/students.jpg" alt="Students" class="about-image">
-            <img src="assets/images/about/elearning.jpg" alt="Learning" class="about-image">
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-  <!-- Mission & Vision Section -->
-  <section class="mission-vision-section">
-    <div class="container">
-      <h2>Our Mission & Vision</h2>
-      <div class="row">
-        <div class="col-md-6 mb-4">
-          <div class="mission-vision-card">
-            <h3>Our Mission</h3>
-            <p>At Skill Grow Institution, our mission is to provide accessible, high-quality education to learners worldwide. We aim to empower individuals with practical skills in Business, Technology, Design, and more, helping them achieve their personal and professional goals.</p>
-          </div>
-        </div>
-        <div class="col-md-6 mb-4">
-          <div class="mission-vision-card">
-            <h3>Our Vision</h3>
-            <p>We envision a world where everyone has the opportunity to learn, grow, and succeed. By offering diverse courses and fostering a supportive learning community, we strive to bridge the gap between ambition and achievement.</p>
+        <div class="col-lg-6">
+          <div class="about-images-mosaic">
+            <img src="assets/images/about/classroom.jpg" alt="Classroom" class="mosaic-img-1">
+            <img src="assets/images/about/students.jpg" alt="Students" class="mosaic-img-2">
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- History Section -->
+  <!-- Mission & Vision Section -->
+  <section class="mission-vision-section">
+    <div class="container">
+      <div class="text-center mb-4">
+        <span class="sgi-about-eyebrow">Our Guiding Light</span>
+        <h2>Our Mission &amp; Vision</h2>
+      </div>
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="mission-vision-card">
+            <div class="mv-icon-box">
+              <i class="fas fa-bullseye"></i>
+            </div>
+            <h3>Our Mission</h3>
+            <p>At Skill Grow Institution, our mission is to provide accessible, high-quality, practical education to learners across India and beyond. We aim to equip ambitious individuals with job-ready skills in Business, Tech, and Design to help them achieve meaningful career outcomes.</p>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mission-vision-card">
+            <div class="mv-icon-box">
+              <i class="fas fa-eye"></i>
+            </div>
+            <h3>Our Vision</h3>
+            <p>We envision an educational landscape where every motivated learner has direct access to high-impact career learning without barriers. By pairing practical industry projects with verified credentials, we create pathways for lifelong professional success.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- History / Journey Section -->
   <section class="history-section">
     <div class="container">
-      <h2>Our Journey</h2>
-      <div class="history-content">
-        <p>Founded in 2018, Skill Grow Institution started as a small initiative to provide accessible education in Business and Technology. Over the years, we’ve expanded our offerings to include Design, Marketing, and Specialized Fields like Aviation and Tourism, reaching learners in over 100 countries.</p>
-        <p>Our commitment to quality education and practical learning has helped us grow into a trusted platform, empowering over 10,000 students to achieve their dreams. We continue to innovate and expand, ensuring every learner has the tools to succeed.</p>
+      <div class="text-center mb-4">
+        <span class="sgi-about-eyebrow">Milestones</span>
+        <h2>Our Journey</h2>
+      </div>
+      <div class="history-card">
+        <div class="history-content">
+          <p>Founded as an initiative for high-impact practical education, <strong>Skill Grow Institution</strong> has grown into a trusted institution offering comprehensive training programs in Management, Information Technology, Design, and Specialized Domains like Aviation and Hospitality.</p>
+          <p>Our commitment to structured curriculum, certified domain experts, and student mentorship has helped thousands of students step into competitive careers with confidence and verified credentials.</p>
+        </div>
       </div>
     </div>
   </section>
@@ -559,27 +611,36 @@ if (session_status() === PHP_SESSION_NONE) {
   <!-- Values Section -->
   <section class="values-section">
     <div class="container">
-      <h2>Our Core Values</h2>
-      <div class="row">
-        <div class="col-md-4 mb-4">
+      <div class="text-center mb-4">
+        <span class="sgi-about-eyebrow">What Defines Us</span>
+        <h2>Our Core Values</h2>
+      </div>
+      <div class="row g-4">
+        <div class="col-md-4">
           <div class="value-card">
-            <i class="fas fa-graduation-cap"></i>
+            <div class="value-icon-box">
+              <i class="fas fa-graduation-cap"></i>
+            </div>
             <h4>Excellence in Education</h4>
-            <p>We are committed to delivering high-quality, practical education that prepares learners for real-world challenges.</p>
+            <p>Delivering practical, high-standard curriculum that prepares learners directly for corporate and technical challenges.</p>
           </div>
         </div>
-        <div class="col-md-4 mb-4">
+        <div class="col-md-4">
           <div class="value-card">
-            <i class="fas fa-globe"></i>
+            <div class="value-icon-box">
+              <i class="fas fa-globe"></i>
+            </div>
             <h4>Accessibility for All</h4>
-            <p>We believe education should be accessible to everyone, regardless of location or background.</p>
+            <p>Providing flexible hybrid and online programs ensuring quality education is accessible regardless of background.</p>
           </div>
         </div>
-        <div class="col-md-4 mb-4">
+        <div class="col-md-4">
           <div class="value-card">
-            <i class="fas fa-users"></i>
-            <h4>Community & Support</h4>
-            <p>We foster a supportive learning community where students can connect, collaborate, and grow together.</p>
+            <div class="value-icon-box">
+              <i class="fas fa-hands-helping"></i>
+            </div>
+            <h4>Mentorship &amp; Support</h4>
+            <p>Fostering an encouraging environment where students receive 1-on-1 counseling, doubt clearing, and guidance.</p>
           </div>
         </div>
       </div>
@@ -588,64 +649,69 @@ if (session_status() === PHP_SESSION_NONE) {
 
   <!-- Team Section -->
   <section class="team-section">
-  <div class="container">
-    <h2>Meet Our Team</h2>
-    <div class="row">
-      <div class="col-md-4 mb-4">
-        <div class="team-card">
-          <img src="assets/images/testi/priya.jpeg" alt="Priya Sharma">
-         <h4>Priya Sharma</h4>
-<p>Head Instructor</p>
-<p>With over 15 years of experience in the education industry, Priya is dedicated to empowering learners through innovative programs.</p>
- </div>
+    <div class="container">
+      <div class="text-center mb-4">
+        <span class="sgi-about-eyebrow">Leadership &amp; Faculty</span>
+        <h2>Meet Our Team</h2>
       </div>
-      <div class="col-md-4 mb-4">
-        <div class="team-card">
-          <img src="assets/images/testi/amin.jpg" alt="Amit Verma">
-          <h4>Amit Verma</h4>
-          <p>Head of Technology</p>
-          <p>Amit leads our tech initiatives, helping students stay ahead in the ever-evolving digital world through hands-on training.</p>
+      <div class="row g-4">
+        <div class="col-md-4">
+          <div class="team-card">
+            <img src="assets/images/testi/priya.jpeg" alt="Priya Sharma">
+            <h4>Priya Sharma</h4>
+            <span class="team-role">Head of Academic Programs</span>
+            <p>Over 12 years of experience in higher education curricula, guiding learners to excel through innovative pedagogies.</p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="team-card">
+            <img src="assets/images/testi/amin.jpg" alt="Amit Verma">
+            <h4>Amit Verma</h4>
+            <span class="team-role">Head of Technology &amp; IT</span>
+            <p>Leads our tech disciplines, mentoring students in full-stack architecture, Python programming, and enterprise software.</p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="team-card">
+            <img src="assets/images/testi/neha-kapoor.webp" alt="Neha Kapoor">
+            <h4>Neha Kapoor</h4>
+            <span class="team-role">Design &amp; Creative Mentor</span>
+            <p>Specializes in UX design and modern digital branding, emphasizing portfolio-building and user-centric aesthetics.</p>
+          </div>
         </div>
       </div>
-      <div class="col-md-4 mb-4">
-        <div class="team-card">
-          <img src="assets/images/testi/neha-kapoor.webp" alt="Neha Kapoor">
-          <h4>Neha Kapoor</h4>
-<p>Course Designer & Trainer</p>
-<p>Neha brings a fresh perspective to our design courses, ensuring creativity, clarity, and practical skills in every module.</p>
-  </div>
-      </div>
     </div>
-  </div>
-</section>
-
+  </section>
 
   <!-- Testimonials Section -->
   <section class="testimonials-section">
     <div class="container">
-      <h2>What Our Students Say</h2>
-      <div class="row">
-        <div class="col-md-4 mb-4">
-          <div class="testimonial-card">
-            <img src="assets/images/testi/rahul-sharma.jpg" alt="Alex Carter">
-            <p>"Skill Grow Institution transformed my career! The Digital Marketing course gave me the skills to launch my own business."</p>
-            <h5>Rahul Sharma</h5>
+      <div class="text-center mb-4">
+        <span class="sgi-about-eyebrow">Student Experiences</span>
+        <h2>What Our Students Say</h2>
+      </div>
+      <div class="row g-4">
+        <?php foreach (array_slice($aboutTestimonials, 0, 3) as $abT): ?>
+          <div class="col-md-4">
+            <div class="testimonial-card">
+              <div>
+                <div class="testi-header">
+                  <img src="<?= htmlspecialchars($abT['image_path']) ?>" alt="<?= htmlspecialchars($abT['student_name']) ?>">
+                  <div>
+                    <h5><?= htmlspecialchars($abT['student_name']) ?></h5>
+                    <span><?= htmlspecialchars($abT['student_designation']) ?></span>
+                  </div>
+                </div>
+                <div class="text-warning mb-2" style="font-size: 0.85rem;">
+                  <?php for ($i = 0; $i < (int)$abT['rating']; $i++): ?>
+                    <i class="fas fa-star"></i>
+                  <?php endfor; ?>
+                </div>
+                <p>"<?= htmlspecialchars($abT['description']) ?>"</p>
+              </div>
+            </div>
           </div>
-        </div>
-        <div class="col-md-4 mb-4">
-          <div class="testimonial-card">
-            <img src="assets/images/testi/priya.jpg" alt="Sarah Lee">
-            <p>"I loved the flexibility of the Web Technology course. The hands-on projects were incredibly helpful!"</p>
-            <h5>Priya Sharma</h5>
-          </div>
-        </div>
-        <div class="col-md-4 mb-4">
-          <div class="testimonial-card">
-            <img src="assets/images/testi/aman.jpg" alt="Michael Brown">
-            <p>"The instructors are amazing, and the community support made learning so much easier."</p>
-            <h5>Aman</h5>
-          </div>
-        </div>
+        <?php endforeach; ?>
       </div>
     </div>
   </section>
@@ -653,27 +719,30 @@ if (session_status() === PHP_SESSION_NONE) {
   <!-- Achievements Section -->
   <section class="achievements-section">
     <div class="container">
-      <h2>Our Achievements</h2>
-      <div class="row">
-        <div class="col-md-4 mb-4">
+      <div class="text-center mb-4">
+        <span class="sgi-about-eyebrow">Our Impact</span>
+        <h2>Key Milestones</h2>
+      </div>
+      <div class="row g-4">
+        <div class="col-md-4">
           <div class="achievement-card">
-            <i class="fas fa-users"></i>
+            <i class="fas fa-user-graduate"></i>
             <h3>10,000+</h3>
-            <p>Students Enrolled</p>
+            <p>Learners Trained</p>
           </div>
         </div>
-        <div class="col-md-4 mb-4">
+        <div class="col-md-4">
           <div class="achievement-card">
             <i class="fas fa-book-open"></i>
             <h3>50+</h3>
-            <p>Courses Offered</p>
+            <p>Certified Course Programs</p>
           </div>
         </div>
-        <div class="col-md-4 mb-4">
+        <div class="col-md-4">
           <div class="achievement-card">
-            <i class="fas fa-globe"></i>
-            <h3>100+</h3>
-            <p>Countries Reached</p>
+            <i class="fas fa-briefcase"></i>
+            <h3>95%</h3>
+            <p>Career Advancement Rate</p>
           </div>
         </div>
       </div>
@@ -683,92 +752,30 @@ if (session_status() === PHP_SESSION_NONE) {
   <!-- Partnerships Section -->
   <section class="partnerships-section">
     <div class="container">
-      <h2>Our Partners</h2>
-     <div class="row">
-      <div class="owl-carousel owl-theme client partner-carousel">
-  <div class="item">
-    <div class="partner-logo">
-      <img src="assets/images/client/emirates.png" alt="Partner 1">
-    </div>
-  </div>
-  <div class="item">
-    <div class="partner-logo">
-      <img src="assets/images/client/Air-France.png" alt="Partner 2">
-    </div>
-  </div>
-  <div class="item">
-    <div class="partner-logo">
-      <img src="assets/images/client/all-turkish.png" alt="Partner 3">
-    </div>
-  </div>
-   <div class="item">
-    <div class="partner-logo">
-      <img src="assets/images/client/british.png" alt="Partner 3">
-    </div>
-  </div>
-   <div class="item">
-    <div class="partner-logo">
-      <img src="assets/images/client/etihad.png" alt="Partner 3">
-    </div>
-  </div>
-   <div class="item">
-    <div class="partner-logo">
-      <img src="assets/images/client/Lufthansa-Simbolo.png" alt="Partner 3">
-    </div>
-  </div>
-   <div class="item">
-    <div class="partner-logo">
-      <img src="assets/images/client/Qatar-Airways.png" alt="Partner 3">
-    </div>
-  </div>
-   <div class="item">
-    <div class="partner-logo">
-      <img src="assets/images/client/singapore-airlines.png" alt="Partner 3">
-    </div>
-  </div>
-   <div class="item">
-    <div class="partner-logo">
-      <img src="assets/images/client/hcl.png" alt="Partner 3">
-    </div>
-  </div>
-   <div class="item">
-    <div class="partner-logo">
-      <img src="assets/images/client/tcs.png" alt="Partner 3">
-    </div>
-  </div>
-   <div class="item">
-    <div class="partner-logo">
-      <img src="assets/images/client/rambagh.png" alt="Partner 3">
-    </div>
-  </div>
-   <div class="item">
-    <div class="partner-logo">
-      <img src="assets/images/client/vindhyavilas-badhav.png" alt="Partner 3">
-    </div>
-  </div>
-   <div class="item">
-    <div class="partner-logo">
-      <img src="assets/images/client/Logo_ITC.png" alt="Partner 3">
-    </div>
-  </div>
- 
-  <div class="item">
-    <div class="partner-logo">
-      <img src="assets/images/logo/logopng.png" alt="Partner 4">
-    </div>
-  </div>
-  
-</div>
-     </div>
+      <div class="text-center mb-4">
+        <span class="sgi-about-eyebrow">Industry Ties</span>
+        <h2>Brands &amp; Airline Partners</h2>
+      </div>
+      <div class="owl-carousel owl-theme partner-carousel">
+        <div class="item"><div class="partner-pill"><img src="assets/images/client/tcs.png" alt="TCS"></div></div>
+        <div class="item"><div class="partner-pill"><img src="assets/images/client/hcl.png" alt="HCL"></div></div>
+        <div class="item"><div class="partner-pill"><img src="assets/images/client/Logo_ITC.png" alt="ITC"></div></div>
+        <div class="item"><div class="partner-pill"><img src="assets/images/client/emirates.png" alt="Emirates"></div></div>
+        <div class="item"><div class="partner-pill"><img src="assets/images/client/Qatar-Airways.png" alt="Qatar Airways"></div></div>
+        <div class="item"><div class="partner-pill"><img src="assets/images/client/Air-France.png" alt="Air France"></div></div>
+        <div class="item"><div class="partner-pill"><img src="assets/images/client/british.png" alt="British Airways"></div></div>
+        <div class="item"><div class="partner-pill"><img src="assets/images/client/singapore-airlines.png" alt="Singapore Airlines"></div></div>
+      </div>
     </div>
   </section>
 
   <!-- Call to Action Section -->
   <section class="cta-section">
     <div class="container">
+      <span class="sgi-about-eyebrow">Take The Next Step</span>
       <h2>Ready to Start Your Learning Journey?</h2>
-      <p>Join thousands of learners at Skill Grow Institution and take the first step toward achieving your goals.</p>
-      <a href="#courses" class="enroll-btn">Explore Courses</a>
+      <p>Join thousands of learners at Skill Grow Institution and take the first step toward achieving your goals with industry mentorship and verified certification.</p>
+      <a href="enrollnow.php" class="enroll-btn d-inline-block"><i class="fas fa-graduation-cap me-2"></i>Enroll Now</a>
     </div>
   </section>
 
@@ -780,46 +787,20 @@ if (session_status() === PHP_SESSION_NONE) {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
   <script>
-    // Navbar scroll effect
-    const navbar = document.querySelector('.navbar');
-    window.addEventListener('scroll', function() {
-      let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-      if (scrollTop > 50) {
-        navbar.classList.add('scrolled');
-      } else {
-        navbar.classList.remove('scrolled');
-      }
-    });
-
-    // Add active class to nav links on click
-    document.querySelectorAll('.nav-link').forEach(link => {
-      link.addEventListener('click', function() {
-        document.querySelectorAll('.nav-link').forEach(nav => nav.classList.remove('active'));
-        this.classList.add('active');
+    $(document).ready(function(){
+      $(".partner-carousel").owlCarousel({
+        loop: true,
+        margin: 18,
+        autoplay: true,
+        autoplayTimeout: 2200,
+        responsive: {
+          0: { items: 2 },
+          600: { items: 4 },
+          1000: { items: 6 }
+        }
       });
     });
   </script>
-  <script>
-  $(document).ready(function(){
-    $(".partner-carousel").owlCarousel({
-      loop: true,
-      margin: 20,
-      autoplay: true,
-      autoplayTimeout: 2000,
-      responsive: {
-        0: {
-          items: 2
-        },
-        600: {
-          items: 3
-        },
-        1000: {
-          items: 7
-        }
-      }
-    });
-  });
-</script>
 </body>
 
 </html>

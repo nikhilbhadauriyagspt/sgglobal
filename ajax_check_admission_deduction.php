@@ -8,19 +8,20 @@ header('Content-Type: application/json');
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/settings_helper.php';
 
-$email = trim($_GET['email'] ?? ($_POST['email'] ?? ''));
+$email      = trim($_GET['email'] ?? ($_POST['email'] ?? ''));
 $courseSlug = trim($_GET['course_slug'] ?? ($_POST['course_slug'] ?? ''));
 $courseId   = (int)($_GET['course_id'] ?? ($_POST['course_id'] ?? 0));
+$appId      = trim($_GET['app_id'] ?? ($_POST['app_id'] ?? ''));
 
 if (empty($email) && !empty($_SESSION['student_email'])) {
     $email = $_SESSION['student_email'];
 }
 
-if (empty($email)) {
+if (empty($email) && empty($appId)) {
     echo json_encode([
         'has_admission' => false,
         'deduction' => 0.00,
-        'message' => 'No student email provided'
+        'message' => 'No student email or application ID provided'
     ]);
     exit;
 }
@@ -50,7 +51,11 @@ try {
     $admStmt = $pdo->prepare("
         SELECT a.id, a.application_id, a.student_id, a.full_name, a.course_name, a.fee_amount, a.created_at
         FROM admissions a
-        WHERE (a.email = :em OR a.student_id = :sid)
+        WHERE (
+            (a.application_id != '' AND a.application_id = :aid)
+            OR (a.email != '' AND a.email = :em)
+            OR (a.student_id != '' AND a.student_id = :sid)
+        )
           AND a.payment_status = 'paid'
           AND (
             LOWER(TRIM(a.course_name)) = LOWER(TRIM(:cname))
@@ -59,16 +64,18 @@ try {
           AND a.application_id NOT IN (
             SELECT COALESCE(admission_id_linked, '') FROM course_enrollments WHERE payment_status = 'paid' AND admission_id_linked IS NOT NULL
           )
-        ORDER BY a.id DESC
+        ORDER BY (a.application_id = :aid_sort) DESC, a.id DESC
         LIMIT 1
     ");
 
     $sid = $_SESSION['student_id'] ?? '';
     $admStmt->execute([
-        'em'    => $email,
-        'sid'   => $sid,
-        'cname' => $courseTitle,
-        'cslug' => $courseSlug
+        'aid'      => $appId,
+        'em'       => $email,
+        'sid'      => $sid,
+        'cname'    => $courseTitle,
+        'cslug'    => $courseSlug,
+        'aid_sort' => $appId
     ]);
 
     $adm = $admStmt->fetch();

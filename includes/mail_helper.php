@@ -11,7 +11,16 @@ require_once __DIR__ . '/PHPMailer/SMTP.php';
 require_once __DIR__ . '/settings_helper.php';
 
 function getSystemSettingsForMail($pdo) {
-    return getGlobalSettings();
+    if (!empty($pdo)) {
+        try {
+            $stmt = $pdo->query("SELECT * FROM system_settings WHERE id = 1 LIMIT 1");
+            $res = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!empty($res)) {
+                return $res;
+            }
+        } catch (\Exception $e) {}
+    }
+    return getGlobalSettings(true);
 }
 
 /**
@@ -31,49 +40,93 @@ function sendSgiEmail($pdo, $toEmail, $toName, $subject, $htmlBody) {
     }
 
     // Live Mode: Dispatch via PHPMailer SMTP
-    $mail = new PHPMailer(true);
-    try {
-        $mail->isSMTP();
-        $mail->Host       = $settings['smtp_host'] ?: 'smtp.gmail.com';
-        $mail->SMTPAuth   = true;
-        $mail->Username   = $settings['smtp_user'];
-        $mail->Password   = $settings['smtp_pass'];
-        
-        if (($settings['smtp_encryption'] ?? 'tls') === 'ssl') {
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-        } else {
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        }
-
-        $mail->Port       = (int)($settings['smtp_port'] ?: 587);
-        $mail->CharSet    = 'UTF-8';
-
-        // Sender
-        $fromEmail = $settings['smtp_from_email'] ?: 'admissions@skillgrowinstitution.in';
-        $fromName  = $settings['smtp_from_name'] ?: 'Skill Grow Institution';
-        $mail->setFrom($fromEmail, $fromName);
-        $mail->addAddress($toEmail, $toName ?: $toEmail);
-        $mail->addReplyTo($fromEmail, $fromName);
-
-        // Content
-        $mail->isHTML(true);
-        $mail->Subject = $subject;
-        $mail->Body    = $htmlBody;
-        $mail->AltBody = strip_tags(str_replace(['<br>', '</p>'], ["\n", "\n\n"], $htmlBody));
-
-        $mail->send();
-        return [
-            'success' => true,
-            'mode'    => 'live',
-            'message' => 'Email sent successfully via SMTP'
-        ];
-    } catch (Exception $e) {
-        return [
-            'success' => false,
-            'mode'    => 'live_error',
-            'message' => $mail->ErrorInfo ?: $e->getMessage()
-        ];
+    $host      = trim($settings['smtp_host'] ?: 'smtp.gmail.com');
+    $user      = trim($settings['smtp_user']);
+    $pass      = trim($settings['smtp_pass']);
+    if (stripos($host, 'gmail.com') !== false) {
+        $pass = str_replace(' ', '', $pass);
     }
+    $port      = (int)($settings['smtp_port'] ?: 587);
+    $enc       = strtolower(trim($settings['smtp_encryption'] ?? 'tls'));
+    $fromEmail = trim($settings['smtp_from_email'] ?: $user ?: 'admissions@skillgrowinstitution.in');
+    $fromName  = trim($settings['smtp_from_name'] ?: 'Skill Grow Institution');
+
+    // Auto-correct common Port + Encryption mismatch (Port 587 uses STARTTLS/tls, Port 465 uses SMTPS/ssl)
+    if ($port === 587 && $enc === 'ssl') {
+        $enc = 'tls';
+    } elseif ($port === 465 && $enc === 'tls') {
+        $enc = 'ssl';
+    }
+
+    $attempts = [
+        ['port' => $port, 'enc' => $enc],
+    ];
+    // Add fallback port/protocol attempt in case primary port is blocked or misconfigured
+    if ($port === 587) {
+        $attempts[] = ['port' => 465, 'enc' => 'ssl'];
+    } elseif ($port === 465) {
+        $attempts[] = ['port' => 587, 'enc' => 'tls'];
+    }
+
+    $lastError = '';
+    foreach ($attempts as $attempt) {
+        $mail = new PHPMailer(true);
+        try {
+            $mail->isSMTP();
+            $mail->Host       = $host;
+            $mail->SMTPAuth   = true;
+            $mail->Username   = $user;
+            $mail->Password   = $pass;
+            $mail->Timeout    = 15;
+
+            if ($attempt['enc'] === 'ssl') {
+                $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+            } elseif ($attempt['enc'] === 'tls') {
+                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            } else {
+                $mail->SMTPSecure  = '';
+                $mail->SMTPAutoTLS = false;
+            }
+
+            $mail->Port    = (int)$attempt['port'];
+            $mail->CharSet = 'UTF-8';
+
+            // Allow shared-hosting / custom mail server SSL certificates
+            $mail->SMTPOptions = [
+                'ssl' => [
+                    'verify_peer'       => false,
+                    'verify_peer_name'  => false,
+                    'allow_self_signed' => true,
+                ],
+            ];
+
+            // Sender
+            $mail->setFrom($fromEmail, $fromName);
+            $mail->addAddress($toEmail, $toName ?: $toEmail);
+            $mail->addReplyTo($fromEmail, $fromName);
+
+            // Content
+            $mail->isHTML(true);
+            $mail->Subject = $subject;
+            $mail->Body    = $htmlBody;
+            $mail->AltBody = strip_tags(str_replace(['<br>', '</p>'], ["\n", "\n\n"], $htmlBody));
+
+            $mail->send();
+            return [
+                'success' => true,
+                'mode'    => 'live',
+                'message' => 'Email sent successfully via SMTP'
+            ];
+        } catch (Exception $e) {
+            $lastError = $mail->ErrorInfo ?: $e->getMessage();
+        }
+    }
+
+    return [
+        'success' => false,
+        'mode'    => 'live_error',
+        'message' => $lastError ?: 'Failed to connect to SMTP server'
+    ];
 }
 
 /**
@@ -213,6 +266,10 @@ function sendAdmissionSuccessEmail($pdo, $studentData) {
         <tr>
           <td class="label">Registration Fee Paid</td>
           <td class="value" style="color: #10b981;">₹{$fee} (Verified)</td>
+        </tr>
+        <tr>
+          <td class="label">Portal Login Credentials</td>
+          <td class="value" style="color: #cbd5e1;">Email / ID: <strong style="color: #e6a910;">{$toEmail}</strong><br><small style="color: #94a3b8;">Log in using the portal password created during your registration.</small></td>
         </tr>
       </table>
 

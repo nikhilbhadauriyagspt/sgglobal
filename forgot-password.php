@@ -550,7 +550,9 @@ session_start();
               <p>Enter your registered email address or Student ID to receive a verification OTP code.</p>
             </div>
 
-            <form id="step1Form" onsubmit="event.preventDefault(); goToStep(2);">
+            <div id="step1Alert" class="alert alert-danger d-none mb-3" style="border-radius: 10px; font-size: 0.86rem;"></div>
+
+            <form id="step1Form" onsubmit="handleSendResetOtp(event)">
               <div class="input-group-modern">
                 <label for="recoveryIdentity">Registered Email or Student ID</label>
                 <div class="input-box">
@@ -559,7 +561,7 @@ session_start();
                 </div>
               </div>
 
-              <button type="submit" class="btn-auth-submit">
+              <button type="submit" class="btn-auth-submit" id="btnSendResetOtp">
                 <span>Send Verification Code</span> <i class="fas fa-arrow-right"></i>
               </button>
 
@@ -577,24 +579,27 @@ session_start();
               <p>We've sent a 6-digit verification code to <strong id="displayTargetEmail" class="text-warning">student@example.com</strong></p>
             </div>
 
-            <form id="step2Form" onsubmit="event.preventDefault(); goToStep(3);">
+            <div id="step2Alert" class="alert alert-danger d-none mb-3" style="border-radius: 10px; font-size: 0.86rem;"></div>
+            <div id="step2ModeNotice" class="d-none mb-3" style="border-radius: 10px; font-size: 0.86rem;"></div>
+
+            <form id="step2Form" onsubmit="handleVerifyResetOtp(event)">
               <label class="d-block text-center text-muted mb-2" style="font-size: 0.85rem;">Enter 6-digit code</label>
               
               <div class="otp-inputs-wrapper">
-                <input type="text" maxlength="1" class="otp-box" value="4" autofocus>
-                <input type="text" maxlength="1" class="otp-box" value="8">
-                <input type="text" maxlength="1" class="otp-box" value="2">
-                <input type="text" maxlength="1" class="otp-box" value="9">
-                <input type="text" maxlength="1" class="otp-box" value="1">
-                <input type="text" maxlength="1" class="otp-box" value="0">
+                <input type="text" maxlength="1" class="otp-box" id="otp1" autofocus>
+                <input type="text" maxlength="1" class="otp-box" id="otp2">
+                <input type="text" maxlength="1" class="otp-box" id="otp3">
+                <input type="text" maxlength="1" class="otp-box" id="otp4">
+                <input type="text" maxlength="1" class="otp-box" id="otp5">
+                <input type="text" maxlength="1" class="otp-box" id="otp6">
               </div>
 
               <div class="text-center my-3">
                 <span class="text-muted" style="font-size: 0.85rem;">Didn't receive the code? </span>
-                <a href="#" class="text-warning fw-semibold text-decoration-none" style="font-size: 0.85rem;" onclick="resendOtpToast(event)">Resend OTP (<span id="resendCountdown">45</span>s)</a>
+                <a href="#" class="text-warning fw-semibold text-decoration-none" id="resendOtpLink" style="font-size: 0.85rem;" onclick="handleResendResetOtp(event)">Resend OTP (<span id="resendCountdown">45</span>s)</a>
               </div>
 
-              <button type="submit" class="btn-auth-submit">
+              <button type="submit" class="btn-auth-submit" id="btnVerifyResetOtp">
                 <span>Verify & Proceed</span> <i class="fas fa-shield-alt"></i>
               </button>
 
@@ -612,14 +617,16 @@ session_start();
               <p>Choose a strong password to protect your student portal account.</p>
             </div>
 
-            <form id="step3Form" onsubmit="event.preventDefault(); goToStep(4);">
+            <div id="step3Alert" class="alert alert-danger d-none mb-3" style="border-radius: 10px; font-size: 0.86rem;"></div>
+
+            <form id="step3Form" onsubmit="handleResetPasswordSubmit(event)">
               
               <!-- New Password -->
               <div class="input-group-modern">
                 <label for="newPassInput">New Password</label>
                 <div class="input-box">
                   <i class="fas fa-key field-icon"></i>
-                  <input type="password" class="form-control" id="newPassInput" placeholder="Min. 8 characters" required oninput="checkPassStrength(this.value)">
+                  <input type="password" class="form-control" id="newPassInput" placeholder="Min. 6 characters" required oninput="checkPassStrength(this.value)">
                   <button type="button" class="toggle-pass-btn" onclick="togglePassVisibility('newPassInput', 'newPassEye')">
                     <i class="fas fa-eye" id="newPassEye"></i>
                   </button>
@@ -631,7 +638,7 @@ session_start();
                 </div>
                 
                 <div class="strength-reqs">
-                  <span id="reqLength"><i class="fas fa-circle-notch"></i> 8+ chars</span>
+                  <span id="reqLength"><i class="fas fa-circle-notch"></i> 6+ chars</span>
                   <span id="reqNum"><i class="fas fa-circle-notch"></i> 1 Number</span>
                   <span id="reqSpecial"><i class="fas fa-circle-notch"></i> 1 Special char</span>
                 </div>
@@ -650,7 +657,7 @@ session_start();
                 <div id="passMatchFeedback" style="font-size: 0.8rem; margin-top: 5px;"></div>
               </div>
 
-              <button type="submit" class="btn-auth-submit">
+              <button type="submit" class="btn-auth-submit" id="btnUpdatePassword">
                 <span>Update Password</span> <i class="fas fa-check-circle"></i>
               </button>
             </form>
@@ -702,16 +709,17 @@ session_start();
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
+    let activeTargetEmail = '';
+    let resendTimer = null;
+
     // Step switcher logic
     function goToStep(stepNum) {
-      // Update form steps
       document.querySelectorAll('.recovery-step').forEach(el => el.classList.remove('active'));
       const activeEl = document.getElementById('step' + stepNum);
       if (activeEl) {
         activeEl.classList.add('active');
       }
 
-      // Update pills
       for (let i = 1; i <= 4; i++) {
         const pill = document.getElementById('pillStep' + i);
         if (pill) {
@@ -724,20 +732,246 @@ session_start();
         }
       }
 
-      // If step 2, update display email
-      if (stepNum === 2) {
-        const val = document.getElementById('recoveryIdentity').value.trim();
-        if (val) {
-          document.getElementById('displayTargetEmail').textContent = val;
-        }
+      if (stepNum === 2 && activeTargetEmail) {
+        document.getElementById('displayTargetEmail').textContent = activeTargetEmail;
       }
     }
 
-    // OTP Auto-focus advancement
+    // Step 1: Send OTP via ajax_reset_password.php
+    function handleSendResetOtp(e) {
+      e.preventDefault();
+      const identityInput = document.getElementById('recoveryIdentity');
+      const identity = identityInput.value.trim();
+      const btn = document.getElementById('btnSendResetOtp');
+      const alertBox = document.getElementById('step1Alert');
+
+      alertBox.classList.add('d-none');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Sending Code...';
+
+      const formData = new FormData();
+      formData.append('action', 'send_otp');
+      formData.append('identity', identity);
+
+      fetch('ajax_reset_password.php', {
+        method: 'POST',
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = '<span>Send Verification Code</span> <i class="fas fa-arrow-right"></i>';
+
+        if (data.status === 'success') {
+          activeTargetEmail = data.email || identity;
+          const displayEmail = document.getElementById('displayTargetEmail');
+          if (displayEmail) displayEmail.textContent = activeTargetEmail;
+
+          // Clear previous boxes
+          for (let i = 1; i <= 6; i++) {
+            const b = document.getElementById('otp' + i);
+            if (b) b.value = '';
+          }
+
+          const notice = document.getElementById('step2ModeNotice');
+          if (notice) {
+            notice.classList.remove('d-none');
+            if (data.mode === 'test') {
+              notice.className = 'alert alert-warning py-2 px-3 mb-3';
+              notice.innerHTML = '<i class="fas fa-flask text-warning me-1"></i> <strong>Test Mode Active:</strong> Your verification code is <code>' + (data.demo_otp || '') + '</code>';
+            } else {
+              notice.className = 'alert alert-success py-2 px-3 mb-3';
+              notice.innerHTML = '<i class="fas fa-check-circle text-success me-1"></i> Live OTP sent to <strong>' + activeTargetEmail + '</strong>. Please check your inbox and spam folder.';
+            }
+          }
+
+          goToStep(2);
+          startResendCountdown();
+          setTimeout(() => {
+            const firstBox = document.getElementById('otp1');
+            if (firstBox) firstBox.focus();
+          }, 250);
+        } else {
+          alertBox.textContent = data.message || 'Error sending OTP.';
+          alertBox.classList.remove('d-none');
+        }
+      })
+      .catch(err => {
+        btn.disabled = false;
+        btn.innerHTML = '<span>Send Verification Code</span> <i class="fas fa-arrow-right"></i>';
+        alertBox.textContent = 'Network error. Please try again.';
+        alertBox.classList.remove('d-none');
+      });
+    }
+
+    // Step 2: Verify OTP
+    function handleVerifyResetOtp(e) {
+      e.preventDefault();
+      let otpCode = '';
+      for (let i = 1; i <= 6; i++) {
+        otpCode += (document.getElementById('otp' + i).value || '');
+      }
+
+      const alertBox = document.getElementById('step2Alert');
+      const btn = document.getElementById('btnVerifyResetOtp');
+
+      if (otpCode.length !== 6) {
+        alertBox.textContent = 'Please enter all 6 digits of the OTP code.';
+        alertBox.classList.remove('d-none');
+        return;
+      }
+
+      alertBox.classList.add('d-none');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Verifying...';
+
+      const formData = new FormData();
+      formData.append('action', 'verify_otp');
+      formData.append('otp', otpCode);
+
+      fetch('ajax_reset_password.php', {
+        method: 'POST',
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = '<span>Verify &amp; Proceed</span> <i class="fas fa-shield-alt"></i>';
+
+        if (data.status === 'success') {
+          goToStep(3);
+        } else {
+          alertBox.textContent = data.message || 'Invalid OTP code.';
+          alertBox.classList.remove('d-none');
+        }
+      })
+      .catch(err => {
+        btn.disabled = false;
+        btn.innerHTML = '<span>Verify &amp; Proceed</span> <i class="fas fa-shield-alt"></i>';
+        alertBox.textContent = 'Network error. Please try again.';
+        alertBox.classList.remove('d-none');
+      });
+    }
+
+    // Step 3: Update Password
+    function handleResetPasswordSubmit(e) {
+      e.preventDefault();
+      const newPass = document.getElementById('newPassInput').value;
+      const confirmPass = document.getElementById('confirmPassInput').value;
+      const alertBox = document.getElementById('step3Alert');
+      const btn = document.getElementById('btnUpdatePassword');
+
+      if (newPass.length < 6) {
+        alertBox.textContent = 'Password must be at least 6 characters.';
+        alertBox.classList.remove('d-none');
+        return;
+      }
+
+      if (newPass !== confirmPass) {
+        alertBox.textContent = 'Passwords do not match.';
+        alertBox.classList.remove('d-none');
+        return;
+      }
+
+      alertBox.classList.add('d-none');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Updating...';
+
+      const formData = new FormData();
+      formData.append('action', 'reset_password');
+      formData.append('password', newPass);
+      formData.append('confirm_password', confirmPass);
+
+      fetch('ajax_reset_password.php', {
+        method: 'POST',
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = '<span>Update Password</span> <i class="fas fa-check-circle"></i>';
+
+        if (data.status === 'success') {
+          goToStep(4);
+        } else {
+          alertBox.textContent = data.message || 'Error updating password.';
+          alertBox.classList.remove('d-none');
+        }
+      })
+      .catch(err => {
+        btn.disabled = false;
+        btn.innerHTML = '<span>Update Password</span> <i class="fas fa-check-circle"></i>';
+        alertBox.textContent = 'Network error. Please try again.';
+        alertBox.classList.remove('d-none');
+      });
+    }
+
+    function startResendCountdown() {
+      let seconds = 45;
+      const span = document.getElementById('resendCountdown');
+      const link = document.getElementById('resendOtpLink');
+      if (!span || !link) return;
+
+      link.style.pointerEvents = 'none';
+      link.style.opacity = '0.6';
+
+      if (resendTimer) clearInterval(resendTimer);
+      resendTimer = setInterval(() => {
+        seconds--;
+        span.textContent = seconds;
+        if (seconds <= 0) {
+          clearInterval(resendTimer);
+          link.style.pointerEvents = 'auto';
+          link.style.opacity = '1';
+          span.textContent = '45';
+        }
+      }, 1000);
+    }
+
+    function handleResendResetOtp(e) {
+      e.preventDefault();
+      if (!activeTargetEmail) return;
+
+      const alertBox = document.getElementById('step2Alert');
+      alertBox.classList.add('d-none');
+
+      const formData = new FormData();
+      formData.append('action', 'send_otp');
+      formData.append('identity', activeTargetEmail);
+
+      fetch('ajax_reset_password.php', {
+        method: 'POST',
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'success') {
+          const notice = document.getElementById('step2ModeNotice');
+          if (notice) {
+            notice.classList.remove('d-none');
+            if (data.mode === 'test') {
+              notice.className = 'alert alert-warning py-2 px-3 mb-3';
+              notice.innerHTML = '<i class="fas fa-flask text-warning me-1"></i> <strong>Test Mode Active:</strong> Your verification code is <code>' + (data.demo_otp || '') + '</code>';
+            } else {
+              notice.className = 'alert alert-success py-2 px-3 mb-3';
+              notice.innerHTML = '<i class="fas fa-check-circle text-success me-1"></i> Live OTP resent to <strong>' + activeTargetEmail + '</strong>. Please check your inbox and spam folder.';
+            }
+          }
+          startResendCountdown();
+        } else {
+          alertBox.textContent = data.message || 'Error resending OTP.';
+          alertBox.classList.remove('d-none');
+        }
+      });
+    }
+
+    // OTP Auto-focus advancement & Paste Support
     const otpBoxes = document.querySelectorAll('.otp-box');
     otpBoxes.forEach((box, index) => {
       box.addEventListener('input', (e) => {
-        if (e.target.value.length === 1 && index < otpBoxes.length - 1) {
+        const val = e.target.value.replace(/\D/g, '');
+        e.target.value = val ? val[0] : '';
+        if (val && index < otpBoxes.length - 1) {
           otpBoxes[index + 1].focus();
         }
       });
@@ -745,6 +979,18 @@ session_start();
       box.addEventListener('keydown', (e) => {
         if (e.key === 'Backspace' && e.target.value === '' && index > 0) {
           otpBoxes[index - 1].focus();
+        }
+      });
+
+      box.addEventListener('paste', (e) => {
+        e.preventDefault();
+        const pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
+        if (pasted) {
+          pasted.split('').forEach((char, i) => {
+            if (otpBoxes[i]) otpBoxes[i].value = char;
+          });
+          const focusIndex = Math.min(pasted.length, otpBoxes.length - 1);
+          if (otpBoxes[focusIndex]) otpBoxes[focusIndex].focus();
         }
       });
     });
@@ -757,13 +1003,13 @@ session_start();
       const reqSpecial = document.getElementById('reqSpecial');
 
       let score = 0;
-      if (val.length >= 8) {
+      if (val.length >= 6) {
         score += 1;
         reqLen.classList.add('valid');
-        reqLen.innerHTML = '<i class="fas fa-check-circle"></i> 8+ chars';
+        reqLen.innerHTML = '<i class="fas fa-check-circle"></i> 6+ chars';
       } else {
         reqLen.classList.remove('valid');
-        reqLen.innerHTML = '<i class="fas fa-circle-notch"></i> 8+ chars';
+        reqLen.innerHTML = '<i class="fas fa-circle-notch"></i> 6+ chars';
       }
 
       if (/\d/.test(val)) {
@@ -811,12 +1057,6 @@ session_start();
         icon.classList.remove('fa-eye-slash');
         icon.classList.add('fa-eye');
       }
-    }
-
-    // Resend OTP feedback
-    function resendOtpToast(e) {
-      e.preventDefault();
-      alert('A fresh 6-digit OTP passcode has been resent to your email address!');
     }
   </script>
 </body>
